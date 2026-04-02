@@ -1,92 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Mapagmahal</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome for icons -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-</head>
-<body>
+/* ==========================
+   RESET & BASE
+========================== */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #1e1e1e; /* dark gray */
+    color: #f5f5f5;
+    text-align: center;
+}
 
-    <div class="login-container">
-        <!-- Logo -->
-        <img src="logo.png" alt="Mapagmahal Logo" class="logo">
+/* ==========================
+   LOGIN CONTAINER
+========================== */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 30px;
+    background-color: #2b2b2b;           /* slightly lighter than body */
+    border: 2px solid #ff4d4d;           /* red border */
+    border-radius: 12px;                  /* rounded corners */
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); /* subtle glow */
+}
 
-        <!-- Site Title -->
-        <h1>Mapagmahal</h1>
+/* Logo */
+.logo {
+    width: 100px;
+    margin-bottom: 20px;
+}
 
-        <!-- Username Field -->
-        <div class="input-group">
-            <label for="username">Username</label>
-            <div class="input-icon">
-                <i class="fas fa-envelope"></i>
-                <input type="text" id="username" placeholder="Enter username">
-            </div>
-        </div>
+/* Site Title */
+h1 {
+    margin: 10px 0 30px 0;
+    color: #ff4d4d;
+    font-size: 32px;
+}
 
-        <!-- Password Field -->
-        <div class="input-group">
-            <label for="password">Password</label>
-            <div class="input-icon">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="password" placeholder="Enter password">
-            </div>
-        </div>
+/* ==========================
+   INPUT GROUP
+========================== */
+.input-group {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 15px;
+    text-align: left;
+}
 
-        <!-- Sign In Button -->
-        <button onclick="login()">Sign In</button>
-    </div>
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #aaa;
+}
 
-    <script>
-    async function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+/* Input with icon */
+.input-icon {
+    position: relative;
+}
 
-        if (!username || !password) {
-            alert("Please enter both username and password");
-            return;
-        }
+.input-icon i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+}
 
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+.input-icon input {
+    width: 100%;
+    padding: 12px 12px 12px 36px; /* left padding for icon */
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #2b2b2b;
+    color: #f5f5f5;
+    font-size: 16px;
+}
 
-            const data = await res.json();
+/* Placeholder color */
+input::placeholder {
+    color: #777;
+}
 
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
+/* ==========================
+   BUTTON
+========================== */
+button {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    margin-top: 12px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
 
-            // Redirect based on role
-            switch(data.role) {
-                case "admin":
-                    window.location.href = "admin.html";
-                    break;
-                case "player":
-                    window.location.href = "player.html";
-                    break;
-                case "master_agent":
-                    alert("Master Agent panel coming next");
-                    break;
-                case "declarator":
-                    alert("Declarator panel coming next");
-                    break;
-                default:
-                    alert("Unknown role");
-            }
+button:hover {
+    background-color: #e60000;
+}
 
-        } catch (err) {
-            alert("Server error");
-            console.error(err);
-        }
+/* ==========================
+   RESPONSIVE VIDEO (for future use)
+========================== */
+.responsive-video {
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 16/9;
+    border: 0;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+/* ==========================
+   MEDIA QUERIES FOR MOBILE
+========================== */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 24px;
     }
-    </script>
 
-</body>
-</html>
+    input, button {
+        font-size: 14px;
+    }
+
+    .login-container {
+        padding: 20px;
+    }
+}
