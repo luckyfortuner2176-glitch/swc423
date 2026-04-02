@@ -57,7 +57,8 @@ app.post('/api/login', async (req, res) => {
     const user = result.rows[0];
 
     // For now plain text password check, replace with bcrypt if hashed
-    if (password !== user.password) {
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
       return res.status(401).json({ error: "Wrong password" });
     }
 
@@ -159,3 +160,25 @@ app.use(express.static('public'));
 // ==========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// ==========================
+// BCRYPT USER CREATION (FOR TESTING PURPOSES ONLY)
+// ==========================
+app.post('/api/create-user', async (req, res) => {
+  const { username, password, role } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO users (username, password, role)
+       VALUES ($1, $2, $3)`,
+      [username, hashedPassword, role]
+    );
+
+    res.json({ message: "User created securely" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error creating user" });
+  }
+});
