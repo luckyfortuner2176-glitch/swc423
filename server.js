@@ -1,29 +1,46 @@
-const session = require('express-session');
+// ==========================
+// IMPORTS
+// ==========================
 const express = require('express');
 const cors = require('cors');
-const pool = require('./db/connection');
+const session = require('express-session');
+const pool = require('./db/connection'); // PostgreSQL pool
 const bcrypt = require('bcrypt');
 
 const app = express();
+
+// ==========================
+// MIDDLEWARE
+// ==========================
 app.use(cors());
 app.use(express.json());
 app.use(session({
-  secret: 'secret-key', // you can change later
+  secret: 'secret-key', // Change this in production
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // true only if HTTPS
+  cookie: { secure: false } // Set true only if HTTPS
 }));
 
-/* =========================
-   TEST ROUTE
-========================= */
+// ==========================
+// AUTHENTICATION MIDDLEWARE
+// ==========================
+function isAuthenticated(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
+
+// ==========================
+// TEST ROUTE
+// ==========================
 app.get('/api/test', (req, res) => {
   res.json({ message: "Server working" });
 });
 
-/* =========================
-   LOGIN API (CONNECTED TO DB)
-========================= */
+// ==========================
+// LOGIN ROUTE
+// ==========================
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -39,18 +56,19 @@ app.post('/api/login', async (req, res) => {
 
     const user = result.rows[0];
 
+    // For now plain text password check, replace with bcrypt if hashed
     if (password !== user.password) {
       return res.status(401).json({ error: "Wrong password" });
     }
 
-    // ✅ SAVE SESSION
+    // ✅ Save session
     req.session.user = {
       id: user.id,
       username: user.username,
       role: user.role
     };
 
-    // ✅ UPDATE DATABASE (ONLINE)
+    // ✅ Update DB status to online
     await pool.query(
       'UPDATE users SET status = $1 WHERE id = $2',
       ['online', user.id]
@@ -67,20 +85,9 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-/* =========================
-   SERVE FRONTEND
-========================= */
-app.use(express.static('public'));
-
-/* =========================
-   START SERVER
-========================= */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
-
-/* =========================
-   PROTECT ADMIN PAGE
-========================= */
+// ==========================
+// PROTECTED DASHBOARD ROUTE
+// ==========================
 app.get('/admin.html', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/');
@@ -88,9 +95,47 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(__dirname + '/public/admin.html');
 });
 
-/* =========================
-   LOGOUT API
-========================= */
+// ==========================
+// DASHBOARD DATA API
+// ==========================
+app.get('/api/dashboard', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    // Example: fetch wallet, commission, agents, players
+    const userResult = await pool.query(
+      'SELECT points, role FROM users WHERE id = $1',
+      [userId]
+    );
+
+    // You can extend this with JOINs for agents/players
+    const agentsResult = await pool.query(
+      'SELECT COUNT(*) FROM users WHERE parent_id = $1 AND role = $2',
+      [userId, 'agent']
+    );
+
+    const playersResult = await pool.query(
+      'SELECT COUNT(*) FROM users WHERE parent_id = $1 AND role = $2',
+      [userId, 'player']
+    );
+
+    res.json({
+      username: req.session.user.username,
+      points: userResult.rows[0].points,
+      role: userResult.rows[0].role,
+      agentsCount: parseInt(agentsResult.rows[0].count),
+      playersCount: parseInt(playersResult.rows[0].count)
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ==========================
+// LOGOUT ROUTE
+// ==========================
 app.get('/api/logout', async (req, res) => {
   if (req.session.user) {
     await pool.query(
@@ -103,3 +148,14 @@ app.get('/api/logout', async (req, res) => {
     res.redirect('/');
   });
 });
+
+// ==========================
+// SERVE STATIC FILES
+// ==========================
+app.use(express.static('public'));
+
+// ==========================
+// START SERVER
+// ==========================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
