@@ -220,37 +220,38 @@ button:hover {
 /* ==========================
    MEMBERSHIP CARD
 ========================== */
+/* ==========================
+   MEMBERSHIP CARD (FULL WIDTH FIX)
+========================== */
 .membership-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: block; /* ✅ stack content vertically */
     background: #1e293b;
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 20px;
 }
-.membership-link {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: none;
-}
+
+/* Wrapper = vertical stack */
 .link-wrapper {
     display: flex;
-    width: 100%;
+    flex-direction: column; /* ✅ STACK input + button */
     gap: 10px;
+    width: 100%;
+    margin-top: 10px;
 }
 
-.link-wrapper input {
-    flex: 1;
-    padding: 10px;
+/* INPUT full width */
+.membership-link {
+    width: 100%;
+    padding: 12px;
     border-radius: 6px;
     border: none;
 }
 
+/* BUTTON full width */
 .link-wrapper button {
-    width: auto;
-    padding: 10px 15px;
+    width: 100%; /* ✅ FULL WIDTH */
+    padding: 12px;
 }
 
 /* ==========================
