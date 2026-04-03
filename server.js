@@ -31,6 +31,7 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(express.static('public'));
 // Prevent caching (important after logout)
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store');
