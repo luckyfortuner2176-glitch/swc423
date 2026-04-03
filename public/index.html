@@ -1,113 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Mapagmahal</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-<style>
-    /* Snackbar styling */
-    #snackbar {
-        visibility: hidden;
-        min-width: 250px;
-        color: #fff;
-        text-align: center;
-        padding: 14px;
-        border-radius: 4px;
-        position: fixed;
-        z-index: 999;
-        left: 50%;
-        bottom: 30px;
-        transform: translateX(-50%);
-        font-size: 16px;
-        opacity: 0;
-    }
-    #snackbar.show {
-        visibility: visible;
-        opacity: 1;
-        animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    }
-
-    /* Warning color for errors */
-    #snackbar.warning {
-        background-color: #e74c3c; /* red */
-    }
-
-    /* Success color */
-    #snackbar.success {
-        background-color: #27ae60; /* green */
-    }
-
-    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Mapagmahal</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-<div id="snackbar"></div>
-<div class="login-container">
-    <img src="logo.png" alt="Mapagmahal Logo" class="logo">
-    <h1>Mapagmahal</h1>
+    <div class="login-container">
+        <!-- Logo -->
+        <img src="logo.png" alt="Mapagmahal Logo" class="logo">
 
-    <div class="input-group">
-        <label for="username">Username</label>
-        <div class="input-icon">
-            <i class="fas fa-envelope"></i>
-            <input type="text" id="username" placeholder="Enter username">
+        <!-- Site Title -->
+        <h1>Mapagmahal</h1>
+
+        <!-- Username Field -->
+        <div class="input-group">
+            <label for="username">Username</label>
+            <div class="input-icon">
+                <i class="fas fa-envelope"></i>
+                <input type="text" id="username" placeholder="Enter username">
+            </div>
         </div>
+
+        <!-- Password Field -->
+        <div class="input-group">
+            <label for="password">Password</label>
+            <div class="input-icon">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+        </div>
+
+        <!-- Sign In Button -->
+        <button onclick="login()">Sign In</button>
     </div>
 
-    <div class="input-group">
-        <label for="password">Password</label>
-        <div class="input-icon">
-            <i class="fas fa-lock"></i>
-            <input type="password" id="password" placeholder="Enter password">
-        </div>
-    </div>
+    <script>
+        // Login function
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-    <button onclick="login()">Sign In</button>
-</div>
-
-<script>
-    // Show snackbar notification
-    function showSnackbar(message, type = "warning") {
-        const bar = document.getElementById("snackbar");
-        bar.textContent = message;
-        bar.className = "show " + type; // add type class
-        setTimeout(() => {
-            bar.className = bar.className.replace("show " + type, "");
-        }, 3000);
-    }
-
-    // Login function
-    async function login() {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        if (!username || !password) {
-            showSnackbar("Please enter both username and password", "warning");
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-                showSnackbar(data.error, "warning");
+            if (!username || !password) {
+                alert("Please enter both username and password"); // temporary notification
                 return;
             }
 
-            showSnackbar("Login successful!", "success");
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
 
-            // Redirect based on role after 0.5s
-            setTimeout(() => {
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error); // temporary notification
+                    return;
+                }
+
+                // Redirect based on role
                 switch(data.role) {
                     case "admin":
                         window.location.href = "admin.html";
@@ -116,21 +73,20 @@
                         window.location.href = "player.html";
                         break;
                     case "master_agent":
-                        showSnackbar("Master Agent panel coming next", "warning");
+                        alert("Master Agent panel coming next");
                         break;
                     case "declarator":
-                        showSnackbar("Declarator panel coming next", "warning");
+                        alert("Declarator panel coming next");
                         break;
                     default:
-                        showSnackbar("Unknown role", "warning");
+                        alert("Unknown role");
                 }
-            }, 500);
 
-        } catch (err) {
-            showSnackbar("Server error", "warning");
-            console.error(err);
+            } catch (err) {
+                alert("Server error");
+                console.error(err);
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
