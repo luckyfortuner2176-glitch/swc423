@@ -288,3 +288,39 @@ footer {
     /* Overlay for mobile */
 
 }
+
+/* ==========================
+   SNACKBAR (TOAST)
+========================== */
+#snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 12px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 14px;
+}
+
+/* Show */
+#snackbar.show {
+    visibility: visible;
+    animation: fadein 0.3s, fadeout 0.3s 2.5s;
+}
+
+/* Animations */
+@keyframes fadein {
+    from { bottom: 0; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+}
+
+@keyframes fadeout {
+    from { bottom: 30px; opacity: 1; }
+    to { bottom: 0; opacity: 0; }
+}

@@ -9,7 +9,7 @@
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-
+    <div id="snackbar"></div>
     <div class="login-container">
         <!-- Logo -->
         <img src="logo.png" alt="Mapagmahal Logo" class="logo">
@@ -40,18 +40,28 @@
     </div>
 
     <script>
+    function showSnackbar(message) {
+        const bar = document.getElementById("snackbar");
+        bar.textContent = message;
+        bar.className = "show";
+
+        setTimeout(() => {
+            bar.className = bar.className.replace("show", "");
+        }, 3000);
+    }
     async function login() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
         if (!username || !password) {
-            alert("Please enter both username and password");
+            showSnackbar("Please enter both username and password");
             return;
         }
 
         try {
             const res = await fetch('/api/login', {
                 method: 'POST',
+                credentials: 'include', // ✅ ADD THIS
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
@@ -59,7 +69,7 @@
             const data = await res.json();
 
             if (data.error) {
-                alert(data.error);
+                showSnackbar(data.error);
                 return;
             }
 
@@ -72,17 +82,17 @@
                     window.location.href = "player.html";
                     break;
                 case "master_agent":
-                    alert("Master Agent panel coming next");
+                    showSnackbar("Master Agent panel coming next");
                     break;
                 case "declarator":
-                    alert("Declarator panel coming next");
+                    showSnackbar("Declarator panel coming next");
                     break;
                 default:
-                    alert("Unknown role");
+                    showSnackbar("Unknown role");
             }
 
         } catch (err) {
-            alert("Server error");
+            showSnackbar("Server error");
             console.error(err);
         }
     }
