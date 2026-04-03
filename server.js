@@ -7,7 +7,7 @@ const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const pool = require('./db/connection'); // your PostgreSQL pool
 const bcrypt = require('bcrypt');
-const helmet = require('helmet');
+
 
 const app = express();
 const allowedOrigin = 'https://letsplay-famw.onrender.com'; // your deployed site
@@ -15,7 +15,7 @@ const allowedOrigin = 'https://letsplay-famw.onrender.com'; // your deployed sit
 // ==========================
 // MIDDLEWARE
 // ==========================
-app.use(helmet());
+
 app.use(cors({
   origin: allowedOrigin,
   credentials: true
