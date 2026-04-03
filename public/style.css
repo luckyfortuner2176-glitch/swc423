@@ -220,15 +220,13 @@ button:hover {
 /* ==========================
    MEMBERSHIP CARD
 ========================== */
-/* ==========================
-   MEMBERSHIP CARD (FULL WIDTH FIX)
-========================== */
 .membership-card {
     display: block; /* ✅ stack content vertically */
     background: #1e293b;
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 /* Wrapper = vertical stack */
