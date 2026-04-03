@@ -166,7 +166,12 @@ button:hover {
     border-radius: 12px;
     margin-bottom: 20px;
 }
-
+.membership-link {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+}
 .link-wrapper {
     display: flex;
     width: 100%;
