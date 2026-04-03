@@ -5,21 +5,20 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
-const pool = require('./db/connection'); // your PostgreSQL pool
+const pool = require('./db/connection');
 const bcrypt = require('bcrypt');
 
-
 const app = express();
-const allowedOrigin = 'https://letsplay-famw.onrender.com'; // your deployed site
+const allowedOrigin = 'https://letsplay-famw.onrender.com';
 
 // ==========================
 // MIDDLEWARE
 // ==========================
-
 app.use(cors({
   origin: allowedOrigin,
   credentials: true
 }));
+
 app.use(express.json());
 
 // Prevent caching (important after logout)
@@ -29,21 +28,23 @@ app.use((req, res, next) => {
 });
 
 // ==========================
-// SESSION CONFIG (PostgreSQL store)
+// SESSION CONFIG (FIXED)
 // ==========================
+app.set('trust proxy', 1); // ✅ REQUIRED for Render (IMPORTANT)
+
 app.use(session({
   store: new PgSession({
-    pool: pool,                // Use your existing PostgreSQL pool
-    tableName: 'user_sessions' // default table name
+    pool: pool,
+    tableName: 'user_sessions'
   }),
-  secret: 'super-secret-key',   // change in production
+  secret: 'super-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,               // HTTPS only
+    secure: true,        // ✅ REQUIRED for HTTPS (Render)
     httpOnly: true,
-    sameSite: 'none',
-    maxAge: 1000 * 60 * 30      // 30 minutes
+    sameSite: 'none',    // ✅ REQUIRED for cross-site cookies
+    maxAge: 1000 * 60 * 30
   }
 }));
 
@@ -51,7 +52,9 @@ app.use(session({
 // AUTH MIDDLEWARE
 // ==========================
 function isAuthenticated(req, res, next) {
-  if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   next();
 }
 
@@ -60,33 +63,67 @@ function isAuthenticated(req, res, next) {
 // ==========================
 function authorizeRoles(...roles) {
   return (req, res, next) => {
-    if (!req.session.user) return res.redirect('/');
-    if (!roles.includes(req.session.user.role)) return res.status(403).send("Forbidden");
+    if (!req.session.user) {
+      return res.redirect('/');
+    }
+
+    if (!roles.includes(req.session.user.role)) {
+      return res.status(403).send("Forbidden");
+    }
+
     next();
   };
 }
 
 // ==========================
-// LOGIN ROUTE
+// LOGIN ROUTE (FIXED)
 // ==========================
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username=$1', [username]);
-    if (result.rows.length === 0) return res.status(401).json({ error: "User not found" });
+    const result = await pool.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: "User not found" });
+    }
 
     const user = result.rows[0];
+
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Wrong password" });
+    if (!match) {
+      return res.status(401).json({ error: "Wrong password" });
+    }
 
-    // Save session
-    req.session.user = { id: user.id, username: user.username, role: user.role };
+    // ✅ Save session properly
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      role: user.role
+    };
 
-    // Update user status
-    await pool.query('UPDATE users SET status=$1 WHERE id=$2', ['online', user.id]);
+    // ✅ IMPORTANT: ensure session is saved before response
+    req.session.save(async (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Session error" });
+      }
 
-    res.json({ message: "Login success", role: user.role });
+      // Update user status
+      await pool.query(
+        'UPDATE users SET status = $1 WHERE id = $2',
+        ['online', user.id]
+      );
+
+      res.json({
+        message: "Login success",
+        role: user.role
+      });
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -96,25 +133,46 @@ app.post('/api/login', async (req, res) => {
 // ==========================
 // ROLE-PROTECTED PAGES
 // ==========================
-app.get('/admin.html', authorizeRoles('admin'), (req, res) => res.sendFile(__dirname + '/public/admin.html'));
-app.get('/agent.html', authorizeRoles('master_agent','sub_agent','agent'), (req, res) => res.sendFile(__dirname + '/public/agent.html'));
-app.get('/declarator.html', authorizeRoles('declarator'), (req, res) => res.sendFile(__dirname + '/public/declarator.html'));
-app.get('/player.html', authorizeRoles('player'), (req, res) => res.sendFile(__dirname + '/public/player.html'));
+app.get('/admin.html', authorizeRoles('admin'), (req, res) =>
+  res.sendFile(__dirname + '/public/admin.html')
+);
+
+app.get('/agent.html', authorizeRoles('master_agent', 'sub_agent', 'agent'), (req, res) =>
+  res.sendFile(__dirname + '/public/agent.html')
+);
+
+app.get('/declarator.html', authorizeRoles('declarator'), (req, res) =>
+  res.sendFile(__dirname + '/public/declarator.html')
+);
+
+app.get('/player.html', authorizeRoles('player'), (req, res) =>
+  res.sendFile(__dirname + '/public/player.html')
+);
 
 // ==========================
 // LOGOUT
 // ==========================
 app.get('/api/logout', async (req, res) => {
-  if (req.session.user) await pool.query('UPDATE users SET status=$1 WHERE id=$2', ['offline', req.session.user.id]);
-  req.session.destroy(() => res.redirect('/'));
+  if (req.session.user) {
+    await pool.query(
+      'UPDATE users SET status = $1 WHERE id = $2',
+      ['offline', req.session.user.id]
+    );
+  }
+
+  req.session.destroy(() => {
+    res.redirect('/');
+  });
 });
 
 // ==========================
 // STATIC FILES
 // ==========================
-app.use(express.static('public', { 
-  setHeaders: (res, path) => { 
-    if(path.endsWith('.html')) res.setHeader('Cache-Control','no-store'); 
+app.use(express.static('public', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
   }
 }));
 
