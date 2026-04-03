@@ -282,6 +282,7 @@ button:hover {
 
 .card-content {
     text-align: left;
+    width: 100%;
 }
 
 .card-icon {
