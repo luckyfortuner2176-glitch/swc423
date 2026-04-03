@@ -8,7 +8,7 @@ const pool = require('./db/connection');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-
+const allowedOrigin = 'https://letsplay-famw.onrender.com';
 const app = express();
 
 // ==========================
@@ -16,8 +16,8 @@ const app = express();
 // ==========================
 app.use(helmet());
 app.use(cors({
-  origin: true,        // allow your frontend origin or true for testing
-  credentials: true    // needed for sessions
+  origin: allowedOrigin,   // ✅ your deployed site
+  credentials: true        // ✅ allow cookies to be sent
 }));
 app.use(express.json());
 
