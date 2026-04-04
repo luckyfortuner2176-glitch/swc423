@@ -257,6 +257,35 @@
             setTimeout(() => {
                 snackbar.classList.remove("show");
             }, 3000);
+
+            async function loadDashboardWallets() {
+                try {
+                    const res = await fetch('/api/dashboard-wallets', { credentials: 'include' });
+                    const data = await res.json();
+
+                    // Update main wallet
+                    document.querySelector('.wallet-card .amount').textContent = `${data.userBalance} Points`;
+
+                    // Update agents wallet
+                    const agentsCard = document.querySelector('.agents-card');
+                    agentsCard.querySelector('.amount').textContent = `${data.agentsPoints} Points`;
+                    agentsCard.querySelector('.badge').textContent = data.agentsCount;
+
+                    // Update players wallet
+                    const playersCard = document.querySelector('.players-card');
+                    playersCard.querySelector('.amount').textContent = `${data.playersPoints} Points`;
+                    playersCard.querySelector('.badge').textContent = data.playersCount;
+
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            // Call after session check
+            checkSession().then(() => {
+                loadDashboardWallets();
+                setInterval(loadDashboardWallets, 10000); // refresh every 10 sec
+            });
         }
     </script>
 

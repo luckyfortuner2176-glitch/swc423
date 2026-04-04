@@ -43,3 +43,44 @@ async function getTransactions(userId) {
 }
 
 module.exports = { addTransaction, getBalance, getTransactions };
+
+// Get wallet balances for dashboard
+async function getDashboardWallets(userId) {
+    const client = await pool.connect();
+    try {
+        // 1. Current user balance
+        const userRes = await client.query('SELECT points FROM users WHERE id=$1', [userId]);
+        const userBalance = userRes.rows.length ? userRes.rows[0].points : 0;
+
+        // 2. Agents under this account
+        const agentsRes = await client.query(`
+            SELECT points FROM users 
+            WHERE parent_id=$1 AND role IN ('agent','sub_agent','master_agent')
+        `, [userId]);
+
+        const agentsCount = agentsRes.rows.length;
+        const agentsPoints = agentsRes.rows.reduce((sum, r) => sum + r.points, 0);
+
+        // 3. Players under this account
+        const playersRes = await client.query(`
+            SELECT points FROM users 
+            WHERE parent_id=$1 AND role='player'
+        `, [userId]);
+
+        const playersCount = playersRes.rows.length;
+        const playersPoints = playersRes.rows.reduce((sum, r) => sum + r.points, 0);
+
+        return {
+            userBalance,
+            agentsPoints,
+            agentsCount,
+            playersPoints,
+            playersCount
+        };
+
+    } finally {
+        client.release();
+    }
+}
+
+module.exports = { getDashboardWallets };

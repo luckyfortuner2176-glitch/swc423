@@ -352,3 +352,15 @@ app.get('/api/wallet/:userId/transactions', isAuthenticated, async (req, res) =>
         res.status(500).json({ error: "Server error" });
     }
 });
+
+const { getDashboardWallets } = require('./controllers/wallet');
+
+app.get('/api/dashboard-wallets', isAuthenticated, async (req, res) => {
+    try {
+        const data = await getDashboardWallets(req.session.user.id);
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
