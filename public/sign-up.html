@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up Page - Pitwarriors619</title>
+<title>Sign Up - Pitwarriors619</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
@@ -12,16 +12,40 @@
 <div id="snackbar"></div>
 
 <div class="login-container">
-    <h1>Create Account</h1>
 
+    <!-- LOGO -->
+    <img src="logo.png" class="logo" alt="Logo">
+
+    <h1>Pitwarriors619</h1>
+    <p class="subtitle">Create your account</p>
+
+    <!-- USERNAME -->
     <div class="input-group">
         <label>Username</label>
-        <input type="text" id="username">
+        <div class="input-icon">
+            <span class="icon">👤</span>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
     </div>
 
+    <!-- PASSWORD -->
     <div class="input-group">
         <label>Password</label>
-        <input type="password" id="password">
+        <div class="input-icon">
+            <span class="icon">🔒</span>
+            <input type="password" id="password" placeholder="Enter password">
+            <span class="toggle-password" onclick="togglePassword('password', this)">👁</span>
+        </div>
+    </div>
+
+    <!-- CONFIRM PASSWORD -->
+    <div class="input-group">
+        <label>Confirm Password</label>
+        <div class="input-icon">
+            <span class="icon">🔒</span>
+            <input type="password" id="confirmPassword" placeholder="Confirm password">
+            <span class="toggle-password" onclick="togglePassword('confirmPassword', this)">👁</span>
+        </div>
     </div>
 
     <button onclick="signup()">Register</button>
@@ -30,10 +54,14 @@
         Already have an account? 
         <a href="/">Login here</a>
     </p>
+
 </div>
 
 <script>
-   
+
+// =========================
+// SNACKBAR
+// =========================
 function showSnackbar(message, type = "success") {
     const bar = document.getElementById("snackbar");
     bar.textContent = message;
@@ -44,19 +72,45 @@ function showSnackbar(message, type = "success") {
     }, 3000);
 }
 
-// GET REFERRAL ID FROM URL
+// =========================
+// TOGGLE PASSWORD
+// =========================
+function togglePassword(id, el) {
+    const input = document.getElementById(id);
+
+    if (input.type === "password") {
+        input.type = "text";
+        el.textContent = "🙈";
+    } else {
+        input.type = "password";
+        el.textContent = "👁";
+    }
+}
+
+// =========================
+// GET REF ID
+// =========================
 function getRef() {
     const params = new URLSearchParams(window.location.search);
     return params.get("ref");
 }
 
+// =========================
+// SIGNUP
+// =========================
 async function signup() {
     const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value.trim();
     const parent_id = getRef();
 
-    if (!username || !password) {
+    if (!username || !password || !confirmPassword) {
         showSnackbar("Fill all fields", "warning");
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showSnackbar("Passwords do not match", "error");
         return;
     }
 
@@ -76,11 +130,17 @@ async function signup() {
 
         showSnackbar("Account created! Waiting for approval", "success");
 
+        // optional: clear fields
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("confirmPassword").value = "";
+
     } catch (err) {
         console.error(err);
         showSnackbar("Server error", "error");
     }
 }
+
 </script>
 
 </body>
