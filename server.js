@@ -374,3 +374,51 @@ app.get('/api/dashboard-wallets', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 });
+
+// ==========================
+// CHANGE PASSWORD API
+// ==========================
+app.post('/api/change-password', isAuthenticated, async (req, res) => {
+  const userId = req.session.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    // Get user
+    const result = await pool.query(
+      'SELECT password FROM users WHERE id=$1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = result.rows[0];
+
+    // Check current password
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    // 🔐 Password restrictions
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password=$1 WHERE id=$2',
+      [hashed, userId]
+    );
+
+    res.json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
