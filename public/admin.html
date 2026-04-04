@@ -49,7 +49,7 @@
 
         <!-- CONTENT -->
         <div class="content">
-
+            <div id="snackbar"></div>
              
 
             <!-- Membership Link Card -->
@@ -213,7 +213,7 @@
             input.select();
             input.setSelectionRange(0, 99999); // For mobile
             document.execCommand("copy");
-            alert("Link copied!");
+            showSnackbar("Link copied!");
         }
         async function loadPendingCount() {
             try {
@@ -235,6 +235,28 @@
             } catch (err) {
                 console.error(err);
             }
+        }
+        // =========================
+        // Show snackbar
+        // =========================
+        function showSnackbar(message, type = "success") {
+            const snackbar = document.getElementById("snackbar");
+
+            snackbar.textContent = message;
+
+            // Reset classes
+            snackbar.className = "";
+
+            // Add type (success, error, warning)
+            snackbar.classList.add(type);
+
+            // Show
+            snackbar.classList.add("show");
+
+            // Hide after 3s
+            setTimeout(() => {
+                snackbar.classList.remove("show");
+            }, 3000);
         }
     </script>
 
