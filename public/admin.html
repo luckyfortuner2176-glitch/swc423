@@ -284,6 +284,14 @@
                 const playersCard = document.querySelector('.players-card');
                 playersCard.querySelector('.amount').textContent = `${data.playersPoints} Points`;
                 playersCard.querySelector('.badge').textContent = data.playersCount;
+                
+                const commissionCard = document.querySelector('.commission-card');
+
+                commissionCard.querySelector('.amount').textContent =
+                    `${data.commissionEarnings} Points`;
+
+                commissionCard.querySelector('.rate-box').textContent =
+                    `${data.commissionRate}%`;
 
             } catch (err) {
                 console.error(err);
