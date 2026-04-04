@@ -42,7 +42,12 @@ async function getTransactions(userId) {
     return res.rows;
 }
 
-module.exports = { addTransaction, getBalance, getTransactions };
+module.exports = { 
+    addTransaction, 
+    getBalance, 
+    getTransactions,
+    getDashboardWallets
+ };
 
 // Get wallet balances for dashboard
 async function getDashboardWallets(userId) {
@@ -83,4 +88,3 @@ async function getDashboardWallets(userId) {
     }
 }
 
-module.exports = { getDashboardWallets };
