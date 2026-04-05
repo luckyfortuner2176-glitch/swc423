@@ -44,6 +44,7 @@
         <div class="content">
             <h2>Agents Management</h2>
             <div class="membership-card">
+                <!-- FILTER -->
                 <select id="roleFilter" onchange="loadAgents()" class="membership-link">
                     <option value="">All Roles</option>
                     <option value="master_agent">Incorporator</option>
@@ -57,16 +58,9 @@
                     <option value="offline">Offline</option>
                     <option value="suspended">Suspended</option>
                 </select>
-                <div id="pointsModal" class="modal">
-                    <div class="modal-content">
-                        <h3>Add Points</h3>
-                        <input type="number" id="pointsInput" placeholder="Enter amount">
-                        <button onclick="confirmAddPoints()">Confirm</button>
-                        <button onclick="closeModal()">Cancel</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
+                <!-- TABLE -->
+                <div class="table-wrapper">
+                    <table class="styled-table">
                         <thead>
                             <tr>
                                 <th>Username</th>
@@ -80,6 +74,14 @@
                         <tbody id="agentsTable"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+        <div id="pointsModal" class="modal">
+            <div class="modal-content">
+                <h3>Add Points</h3>
+                <input type="number" id="pointsInput" placeholder="Enter amount">
+                <button onclick="confirmAddPoints()">Confirm</button>
+                <button onclick="closeModal()">Cancel</button>
             </div>
         </div>
         <footer>
