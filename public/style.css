@@ -445,3 +445,34 @@ button:active {
     outline: none;
     box-shadow: 0 0 5px rgba(20, 184, 166, 0.5);
 }
+
+.pending-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.pending-table th,
+.pending-table td {
+    padding: 12px;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+}
+
+.pending-table th {
+    color: #14b8a6;
+}
+
+.pending-table select {
+    padding: 6px;
+    border-radius: 6px;
+    background: #0f172a;
+    color: white;
+    border: 1px solid #334155;
+}
+
+.pending-table button {
+    padding: 6px 10px;
+    margin-right: 5px;
+    width: auto;
+}

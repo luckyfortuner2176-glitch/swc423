@@ -44,7 +44,24 @@
 
         <div class="content">
             <h2>Pending Approvals</h2>
-            <p>Coming soon...</p>
+
+            <div class="membership-card">
+                <table class="pending-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Date</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTableBody">
+                        <!-- Data here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="snackbar"></div>
         </div>
 
         <footer>
@@ -150,8 +167,115 @@
                 snackbar.className = snackbar.className.replace("show", "");
             }, 3000);
         }
-        
+        // =========================
+        // LOAD PENDING USERS
+        // =========================
+        async function loadPendingUsers() {
+            try {
+                const res = await fetch('/api/pending-users', {
+                    credentials: 'include'
+                });
+
+                const users = await res.json();
+
+                const table = document.getElementById('pendingTableBody');
+                table.innerHTML = '';
+
+                if (users.length === 0) {
+                    table.innerHTML = `<tr><td colspan="4">No pending users</td></tr>`;
+                    return;
+                }
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${user.username}</td>
+                        <td>${new Date(user.created_at).toLocaleString()}</td>
+                        <td>
+                            <select id="role-${user.id}">
+                                <option value="master_agent">Incorporator</option>
+                                <option value="sub_agent">Master Agent</option>
+                                <option value="agent">Gold Agent</option>
+                                <option value="player">Player</option>
+                                <option value="declarator">Declarator</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="approveUser(${user.id})">Approve</button>
+                            <button onclick="rejectUser(${user.id})">Reject</button>
+                        </td>
+                    `;
+
+                    table.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // =========================
+        // APPROVE USER
+        // =========================
+        async function approveUser(userId) {
+            const role = document.getElementById(`role-${userId}`).value;
+
+            try {
+                const res = await fetch('/api/approve-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId, role })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showSnackbar(data.error, "error");
+                    return;
+                }
+
+                showSnackbar("User approved", "success");
+                loadPendingUsers();
+                loadPendingCount();
+
+            } catch (err) {
+                console.error(err);
+                showSnackbar("Server error", "error");
+            }
+        }
+
+        // =========================
+        // REJECT USER
+        // =========================
+        async function rejectUser(userId) {
+            try {
+                const res = await fetch('/api/reject-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showSnackbar(data.error, "error");
+                    return;
+                }
+
+                showSnackbar("User rejected", "warning");
+                loadPendingUsers();
+                loadPendingCount();
+
+            } catch (err) {
+                console.error(err);
+                showSnackbar("Server error", "error");
+            }
+        }
         checkSession();
+        loadPendingUsers();
     </script>
 
 </body>

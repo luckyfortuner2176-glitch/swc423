@@ -421,4 +421,68 @@ app.post('/api/change-password', isAuthenticated, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
+}); 
+// ==========================
+// PENDING USERS API
+// ==========================
+app.get('/api/pending-users', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const result = await pool.query(`
+      SELECT id, username, role, created_at
+      FROM users
+      WHERE parent_id = $1 AND status = 'pending'
+      ORDER BY created_at DESC
+    `, [userId]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
+// APPROVE USER API
+// ==========================
+app.post('/api/approve-user', isAuthenticated, async (req, res) => {
+  const { userId, role } = req.body;
+
+  try {
+    await pool.query(`
+      UPDATE users
+      SET status = 'offline',
+          role = $1,
+          updated_at = NOW()
+      WHERE id = $2
+    `, [role, userId]);
+
+    res.json({ message: "User approved" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
+// REJECT USER API
+// ==========================
+app.post('/api/reject-user', isAuthenticated, async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    await pool.query(`
+      UPDATE users
+      SET status = 'rejected',
+          updated_at = NOW()
+      WHERE id = $1
+    `, [userId]);
+
+    res.json({ message: "User rejected" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
