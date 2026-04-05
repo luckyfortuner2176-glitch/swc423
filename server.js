@@ -494,7 +494,7 @@ app.get('/api/players', isAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
 
     const result = await pool.query(`
-      SELECT u.id, u.username, u.points, u.status, u.role,
+      SELECT u.id, u.username, u.points, u.status, u.role, u.parent_id,
              p.username AS parent_username
       FROM users u
       LEFT JOIN users p ON u.parent_id = p.id
@@ -516,20 +516,39 @@ app.get('/api/players', isAuthenticated, async (req, res) => {
 // ==========================
 app.post('/api/add-points', isAuthenticated, async (req, res) => {
   const { userId, amount } = req.body;
+  const currentUserId = req.session.user.id;
 
   try {
     if (amount <= 0) {
       return res.status(400).json({ error: "Invalid amount" });
     }
 
+    // 🔍 GET TARGET USER
+    const result = await pool.query(
+      'SELECT parent_id FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const player = result.rows[0];
+
+    // 🔐 SERVER-SIDE PROTECTION (PUT IT HERE)
+    if (Number(player.parent_id) !== Number(currentUserId)) {
+      return res.status(403).json({ error: "Not allowed" });
+    }
+
+    // ✅ ADD POINTS
     await addTransaction({
       user_id: userId,
       type: 'credit',
       amount,
-      description: 'Admin added points'
+      description: 'Agent added points'
     });
 
-    res.json({ message: "Points added" });
+    res.json({ message: "Points added successfully" });
 
   } catch (err) {
     console.error(err);

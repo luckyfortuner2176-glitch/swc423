@@ -216,10 +216,10 @@
 
                 players.forEach(p => {
 
-                    const isDirect = p.parent_id === currentUserId;
+                    const isDirect = Number(p.parent_id) === Number(currentUserId);
 
                     const row = document.createElement('tr');
-
+                    console.log("Player parent:", p.parent_id, "Current user:", currentUserId);
                     row.innerHTML = `
                         <td>${p.username}</td>
                         <td>${p.points}</td>
