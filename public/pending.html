@@ -74,6 +74,8 @@
                 console.error(err);
                 window.location.href = '/';
             }
+            loadPendingCount();
+            setInterval(loadPendingCount, 10000);
         }
 
         function toggleSidebar() {
