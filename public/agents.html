@@ -381,7 +381,7 @@
                                 <option value="withdraw_load">💸 Withdraw Load</option>
                                 <option value="withdraw_commission">💰 Withdraw Commission</option>
                                 <option value="block">⛔ Block</option>
-                            </select>
+                            </select><br>
                         </td>
                         <td>${formatPHP(a.points)}</td>
                         <td>${formatPHP(a.commission_earnings || 0)}</td>
@@ -422,6 +422,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ userId, rate: Number(rate) })
+                
             });
 
             const data = await res.json();
@@ -430,7 +431,7 @@
                 showSnackbar(data.error);
                 return;
             }
-
+            loadAgents();
             showSnackbar("Commission updated", true);
         }
         // =========================
