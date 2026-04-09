@@ -121,7 +121,8 @@
 
                 document.querySelectorAll('.username')
                     .forEach(el => el.textContent = data.username);
-
+                // ✅ LOAD AGENTS HERE
+                loadAgents();
             } catch (err) {
                 console.error(err);
                 window.location.href = '/';
