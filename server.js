@@ -677,6 +677,8 @@ app.get('/api/agents', isAuthenticated, async (req, res) => {
         u.points,
         u.status,
         u.parent_id,
+        u.commission_rate,
+        u.commission_earnings,
         p.username AS parent_username
       FROM users u
       LEFT JOIN users p ON u.parent_id = p.id
