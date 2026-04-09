@@ -66,13 +66,13 @@
                     <table class="styled-table">
                         <thead>
                             <tr>
-                                <th onclick="sortTable('username')">Username ⬍</th>
+                                <th onclick="sortTable(0)">Username <span class="sort-arrow">↑↓</span></th>
                                 <th>Actions</th>
-                                <th onclick="sortTable('points')">Wallet ⬍</th>
-                                <th onclick="sortTable('earnings')">Earnings ⬍</th>
-                                <th onclick="sortTable('commission')">Commission ⬍</th>
+                                <th onclick="sortTable(2)">Wallet <span class="sort-arrow">↑↓</span></th>
+                                <th onclick="sortTable(3)">Earnings <span class="sort-arrow">↑↓</span></th>
+                                <th onclick="sortTable(4)">Commission <span class="sort-arrow">↑↓</span></th>
                             </tr>
-                        </thead>
+                            </thead>
                         <tbody id="agentsTable"></tbody>
                     </table>
                 </div>
@@ -343,11 +343,28 @@
         let sortDirection = 1; // 1 = asc, -1 = desc
         let currentSort = '';
 
-        function sortTable(column) {
-            sortDirection = currentSort === column ? -sortDirection : 1;
-            currentSort = column;
+        function sortTable(columnIndex) {
+            const table = document.querySelector('.styled-table tbody');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            let asc = table.getAttribute('data-sort-dir') !== 'asc';
 
-            loadAgents();
+            rows.sort((a, b) => {
+                const cellA = a.children[columnIndex].textContent.trim();
+                const cellB = b.children[columnIndex].textContent.trim();
+
+                // Numeric sort for Wallet, Earnings, Commission
+                if (columnIndex >= 2) {
+                    const numA = parseFloat(cellA.replace(/[^0-9.-]+/g,"")) || 0;
+                    const numB = parseFloat(cellB.replace(/[^0-9.-]+/g,"")) || 0;
+                    return asc ? numA - numB : numB - numA;
+                }
+
+                // Text sort for Username
+                return asc ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+            });
+
+            rows.forEach(row => table.appendChild(row));
+            table.setAttribute('data-sort-dir', asc ? 'asc' : 'desc');
         }
         async function loadAgents() {
             try {
