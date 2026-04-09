@@ -371,7 +371,7 @@
                     const row = document.createElement('tr');
 
                     row.innerHTML = `
-                        <td>${a.username}<br><p class="btn add">${formatRole(a.role)}</p></td>
+                        <td><p class="btn add">${a.username}</p><br>${formatRole(a.role)}</td>
                         <td class="actions">
                             <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
                                 onchange="handleAgentAction(this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})">
