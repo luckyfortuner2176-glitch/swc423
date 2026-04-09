@@ -67,10 +67,10 @@
                         <thead>
                             <tr>
                                 <th>Username</th>
-                                <th>Wallet</th>
-                                <th>Commission</th>
-                                <th>Earnings</th>
                                 <th>Actions</th>
+                                <th>Wallet</th>
+                                <th>Earnings</th>
+                                <th>Commission</th>
                             </tr>
                         </thead>
                         <tbody id="agentsTable"></tbody>
@@ -372,8 +372,22 @@
 
                     row.innerHTML = `
                         <td>${a.username}<br><p class="btn add">${formatRole(a.role)}</p></td>
-                        <td>${a.points}</td>
+                        <td class="actions">
+                            <td class="actions">
+                                <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
+                                    onchange="handleAgentAction(this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})">
+                                    
+                                    <option value="">⚙️ Select Action</option>
+                                    <option value="load">➕ Load</option>
+                                    <option value="withdraw_load">💸 Withdraw Load</option>
+                                    <option value="withdraw_commission">💰 Withdraw Commission</option>
+                                    <option value="block">⛔ Block</option>
+                                </select>
+                            </td>
 
+                        </td>
+                        <td>${a.points}</td>
+                        <td>${a.commission_earnings || 0}</td>
                         <td>
                             CURRENT: ${a.commission_rate || 0}%<br>
                             <input type="number" min="0" max="100"
@@ -382,24 +396,9 @@
                                 onchange="updateCommission(${a.id}, this.value)">
                         </td>
 
-                        <td>${a.commission_earnings || 0}</td>
+                        
 
-                        <td class="actions">
-                            <button class="btn add ${!isDirect ? 'disabled' : ''}" 
-                                onclick="${isDirect ? `openModal(${a.id})` : ''}">
-                                ➕
-                            </button>
-                            <button class="btn.activate ${!isDirect ? 'disabled' : ''}" 
-                                onclick="${isDirect ? `openCommissionModal(${a.id}, ${a.commission_earnings || 0}, 'convert')` : ''}">
-                                💰
-                            </button>
-
-                            <button class="btn reset ${!isDirect ? 'disabled' : ''}" 
-                                onclick="${isDirect ? `openCommissionModal(${a.id}, ${a.points || 0}, 'withdraw')` : ''}">
-                                💸
-                            </button>
-
-                        </td>
+                        
                     `;
 
                     table.appendChild(row);
@@ -540,9 +539,32 @@
             loadAgents();
         }
         // =========================
-        // Commission modal logic
+        // Handle dropdown actions
         // =========================
+        function handleAgentAction(action, userId, points, commission) {
+            if (!action) return;
 
+            switch(action) {
+                case 'load':
+                    openModal(userId);
+                    break;
+
+                case 'withdraw_load':
+                    openCommissionModal(userId, points, 'withdraw');
+                    break;
+
+                case 'withdraw_commission':
+                    openCommissionModal(userId, commission, 'convert');
+                    break;
+
+                case 'block':
+                    toggleStatus(userId, 'offline'); // or pass actual status if needed
+                    break;
+            }
+
+            // Reset dropdown after action
+            event.target.value = "";
+        }
         checkSession();
     </script>
 
