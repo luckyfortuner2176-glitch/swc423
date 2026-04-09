@@ -427,8 +427,16 @@
 
                     row.innerHTML = `
                         <td><p class="btn add">${a.username}</p><br>${formatRole(a.role)}</td>
-                        <td class="actions">
-                            
+                        <td >
+                            <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
+                                onchange="handleAgentAction(this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})">
+                                    
+                                <option value="">⚙️ Select Action</option>
+                                <option value="load">➕ Load</option>
+                                <option value="withdraw_load">💸 Withdraw Load</option>
+                                <option value="withdraw_commission">💰 Withdraw Commission</option>
+                                <option value="block">⛔ Block</option>
+                            </select>
                         </td>
                         <td>${formatPHP(a.points)}</td>
                         <td>${formatPHP(a.commission_earnings || 0)}</td>
