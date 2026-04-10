@@ -76,6 +76,40 @@
     margin-bottom: 10px;
     color: #14b8a6;
 }
+
+/* QUICK BET INLINE */
+.quick-bets-inline {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 10px;
+}
+
+.quick-bets-inline button {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 50px;
+}
+
+/* MAIN BET BUTTONS */
+.bet-main {
+    display: flex;
+    gap: 10px;
+}
+
+.bet-main button {
+    flex: 1;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.bet-info {
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
 </style>
 
 </head>
@@ -123,29 +157,34 @@
                     Balance: <span id="balance">0</span> pts
                 </div>
 
-                <!-- BET TYPE -->
-                <div class="bet-options">
-                    <button class="meron" onclick="selectBet('MERON')">MERON</button>
-                    <button class="wala" onclick="selectBet('WALA')">WALA</button>
-                    <button class="draw" onclick="selectBet('DRAW')">DRAW</button>
-                </div>
-
-                <!-- QUICK AMOUNTS -->
-                <div class="quick-bets">
+                <!-- QUICK AMOUNTS (ONE LINE) -->
+                <div class="quick-bets-inline">
                     <button onclick="setAmount(20)">20</button>
+                    <button onclick="setAmount(30)">30</button>
                     <button onclick="setAmount(50)">50</button>
                     <button onclick="setAmount(100)">100</button>
                     <button onclick="setAmount(200)">200</button>
                     <button onclick="setAmount(300)">300</button>
                 </div>
 
-                <!-- MANUAL INPUT -->
-                <div class="input-group">
-                    <label>Custom Amount</label>
-                    <input type="number" id="betAmount" placeholder="Enter amount">
+                <!-- BET BUTTONS -->
+                <div class="bet-main">
+                    <button id="meronBtn" class="meron" onclick="placeBet('MERON')">
+                        MERON<br>
+                        <span class="bet-info">0 → 0</span>
+                    </button>
+
+                    <button id="walaBtn" class="wala" onclick="placeBet('WALA')">
+                        WALA<br>
+                        <span class="bet-info">0 → 0</span>
+                    </button>
                 </div>
 
-                <button onclick="placeBet()">Place Bet</button>
+                <!-- OPTIONAL CUSTOM -->
+                <div class="input-group">
+                    <label>Custom Amount</label>
+                    <input type="number" id="betAmount" placeholder="Enter amount" oninput="updateButtons()">
+                </div>
             </div>
 
         </div>
@@ -292,6 +331,46 @@ function showSnackbar(msg, type="") {
     }, 3000);
 }
 
+let selectedAmount = 0;
+
+// ==========================
+// SET AMOUNT
+// ==========================
+function setAmount(val) {
+    selectedAmount = val;
+    document.getElementById('betAmount').value = val;
+    updateButtons();
+}
+
+// ==========================
+// UPDATE BUTTON DISPLAY
+// ==========================
+function updateButtons() {
+    const amount = Number(document.getElementById('betAmount').value) || 0;
+    selectedAmount = amount;
+
+    // TEMP payout logic (replace later with real odds)
+    const payout = amount * 2;
+
+    document.querySelector("#meronBtn .bet-info").textContent =
+        `${amount} → ${payout}`;
+
+    document.querySelector("#walaBtn .bet-info").textContent =
+        `${amount} → ${payout}`;
+}
+
+// ==========================
+// PLACE BET
+// ==========================
+function placeBet(type) {
+    if (!selectedAmount || selectedAmount <= 0) {
+        return showSnackbar("Select amount first", "error");
+    }
+
+    showSnackbar(`Bet ${type} - ${selectedAmount}`);
+
+    // TODO: send to backend later
+}
 // INIT
 checkSession();
 </script>
