@@ -536,7 +536,7 @@ app.post('/api/add-points', isAuthenticated, async (req, res) => {
 
     // 🔍 Get player
     const playerRes = await pool.query(
-      'SELECT parent_id, points, role FROM users WHERE id = $1',
+      'SELECT parent_id, points, role, username FROM users WHERE id = $1',
       [userId]
     );
 
@@ -545,7 +545,11 @@ app.post('/api/add-points', isAuthenticated, async (req, res) => {
     }
 
     const player = playerRes.rows[0];
-
+    
+    const agentRes = await pool.query(
+      'SELECT points, username FROM users WHERE id = $1',
+      [currentUserId]
+    );
     // 🔐 Only direct parent
     if (Number(player.parent_id) !== Number(currentUserId)) {
       return res.status(403).json({ error: "Not allowed" });
@@ -593,7 +597,7 @@ app.post('/api/add-points', isAuthenticated, async (req, res) => {
       currentUserId,
       pointsToTransfer,
       newAgentBalance,
-      `Transferred to player ID ${userId}`
+      `Transferred to player ID ${player.username})`
     ]);
 
     // 📝 Log player (CREDIT)
@@ -605,7 +609,7 @@ app.post('/api/add-points', isAuthenticated, async (req, res) => {
       userId,
       pointsToTransfer,
       newPlayerBalance,
-      `Received from agent ID ${currentUserId}`
+      `Received from ${agentRes.rows[0].username}`
     ]);
 
     await pool.query('COMMIT');
