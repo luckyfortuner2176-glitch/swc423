@@ -176,7 +176,7 @@ app.get('/admin.html', authorizeRoles('admin','master_agent', 'sub_agent', 'agen
 app.get('/declarator.html', authorizeRoles('declarator'), (req, res) =>
   res.sendFile(__dirname + '/public/declarator.html')
 );
-app.get('/player.html', authorizeRoles('player'), (req, res) =>
+app.get('../players/player.html', authorizeRoles('player'), (req, res) =>
   res.sendFile(__dirname + '/public/player.html')
 );
 app.get('/summary.html', authorizeRoles('admin'), (req, res) =>
