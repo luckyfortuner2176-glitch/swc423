@@ -44,7 +44,21 @@
 
         <div class="content">
             <h2>Wallet Logs</h2>
-            <p>Coming soon...</p>
+
+            <div class="table-wrapper">
+                <table class="styled-table" id="walletTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Balance After</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
 
         <footer>
@@ -81,7 +95,43 @@
             sidebar.classList.toggle('collapsed');
         }
 
+        async function loadWalletLogs() {
+            try {
+                const res = await fetch('/api/my-wallet-transactions', {
+                    credentials: 'include'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await res.json();
+                const tbody = document.querySelector('#walletTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(tx => {
+                    const row = document.createElement('tr');
+
+                    const typeIcon = tx.type === 'credit' ? '↑' : '↓';
+
+                    row.innerHTML = `
+                        <td>${new Date(tx.created_at).toLocaleString()}</td>
+                        <td>${typeIcon} ${tx.type}</td>
+                        <td>${tx.amount}</td>
+                        <td>${tx.balance_after}</td>
+                        <td>${tx.description}</td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
         checkSession();
+        loadWalletLogs();
     </script>
 
 </body>

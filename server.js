@@ -835,3 +835,26 @@ app.post('/api/withdraw-points', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// ==========================
+// MY WALLET TRANSACTIONS API
+// ==========================
+
+app.get('/api/my-wallet-transactions', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const result = await pool.query(`
+      SELECT id, type, amount, balance_after, description, reference_id, created_at
+      FROM wallet_transactions
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
