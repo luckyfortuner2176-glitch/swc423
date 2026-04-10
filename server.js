@@ -555,11 +555,7 @@ app.post('/api/add-points', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: "Not allowed" });
     }
 
-    // 🔍 Get current user (agent)
-    const agentRes = await pool.query(
-      'SELECT points FROM users WHERE id = $1',
-      [currentUserId]
-    );
+    
 
     const agentPoints = Number(agentRes.rows[0].points);
 
