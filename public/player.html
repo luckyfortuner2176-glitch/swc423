@@ -7,251 +7,140 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-.video-container {
-    width: 100%;
-    aspect-ratio: 16/9;
-    margin-bottom: 15px;
-}
-.video-container iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
+.video-container { width:100%; aspect-ratio:16/9; margin-bottom:15px; }
+.video-container iframe { width:100%; height:100%; border:none; }
 
-/* BETTING TABLE */
-.betting-card {
-    background: #1e293b;
-    border-radius: 12px;
-    padding: 15px;
-    text-align: left;
-}
+.betting-card { background:#1e293b; border-radius:12px; padding:15px; }
 
-/* ROWS */
-.row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
+.row { display:flex; justify-content:space-between; margin-bottom:8px; }
+.header-row { font-weight:bold; color:#14b8a6; }
 
-.row.center {
-    justify-content: center;
-}
+.status.OPEN { color:#2ecc71; }
+.status.CLOSED { color:#f1c40f; }
+.status.CANCELLED { color:#e74c3c; }
 
-/* HEADER */
-.header-row {
-    font-weight: bold;
-    color: #14b8a6;
-}
+.total-box { width:48%; padding:10px; border-radius:6px; font-weight:bold; }
+.meron-bg { background:#7f1d1d; }
+.wala-bg { background:#1e3a8a; }
 
-/* STATUS */
-.status {
-    font-weight: bold;
-}
-.status.OPEN { color: #2ecc71; }
-.status.CLOSED { color: #f1c40f; }
-.status.CANCELLED { color: #e74c3c; }
+.label-row div { width:50%; text-align:center; padding:10px; font-weight:bold; }
+.label-meron { background:#dc2626; }
+.label-wala { background:#2563eb; }
 
-/* TOTALS */
-.total-box {
-    width: 48%;
-    padding: 10px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-.meron-bg { background: #7f1d1d; }
-.wala-bg { background: #1e3a8a; }
+.half { width:50%; text-align:center; }
 
-/* LABEL */
-.label-row div {
-    width: 50%;
-    text-align: center;
-    padding: 10px;
-    font-weight: bold;
-}
-.label-meron { background: #dc2626; }
-.label-wala { background: #2563eb; }
+.bet-buttons { display:flex; gap:10px; margin-top:10px; }
+.bet-btn { flex:1; padding:12px; font-weight:bold; }
+.bet-meron { background:#dc2626; }
+.bet-wala { background:#2563eb; }
 
-/* PAYOUT / BET */
-.half {
-    width: 50%;
-    text-align: center;
-}
+.balance-box { margin-top:10px; padding:10px; background:#0f172a; border:1px solid #14b8a6; border-radius:6px; text-align:center; }
 
-/* BUTTONS */
-.bet-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-.bet-btn {
-    flex: 1;
-    padding: 12px;
-    font-weight: bold;
-}
-.bet-meron { background: #dc2626; }
-.bet-wala { background: #2563eb; }
+.amount-input { width:100%; padding:10px; margin-top:10px; border-radius:6px; border:none; }
 
-/* BALANCE */
-.balance-box {
-    margin-top: 10px;
-    padding: 10px;
-    background: #0f172a;
-    border: 1px solid #14b8a6;
-    border-radius: 6px;
-    text-align: center;
-}
-
-/* INPUT */
-.amount-input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 6px;
-    border: none;
-}
-
-/* CHIPS */
-.chips {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    margin-top: 10px;
-}
-.chips button {
-    padding: 6px 10px;
-    font-size: 12px;
-}
-
-/* DRAW */
-.draw-row {
-    margin-top: 10px;
-}
+.chips { display:flex; gap:5px; overflow-x:auto; margin-top:10px; }
+.chips button { padding:6px 10px; font-size:12px; }
 </style>
-
 </head>
 
 <body class="dashboard-body">
 
-<div class="sidebar" id="sidebar">
-    <h2>Player: <span class="username">User</span></h2>
-    <a href="player.html">🎮 Game</a>
-    <a href="change-password.html">🔑 Change Password</a>
-    <a href="/api/logout">🚪 Logout</a>
-</div>
-
 <div class="main">
-
-<div class="header">
-    <div class="hamburger" onclick="toggleSidebar()">☰</div>
-</div>
-
 <div class="content">
 
-<!-- VIDEO -->
 <div class="video-container">
-    <iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
+<iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
 </div>
 
-<!-- BETTING -->
 <div class="betting-card">
 
-    <!-- HEADER -->
-    <div class="row header-row">
-        <div>BETTING</div>
-        <div>FIGHT # <span id="fightNumber">0</span></div>
-    </div>
+<div class="row header-row">
+<div>BETTING</div>
+<div>FIGHT # <span id="fightNumber">0</span></div>
+</div>
 
-    <!-- STATUS -->
-    <div class="row">
-        <div>Status:</div>
-        <div id="betStatus" class="status OPEN">OPEN</div>
-    </div>
+<div class="row">
+<div>Status:</div>
+<div id="betStatus" class="status OPEN">OPEN</div>
+</div>
 
-    <!-- TOTAL BETS -->
-    <div class="row">
-        <div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
-        <div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
-    </div>
+<div class="row">
+<div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
+<div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
+</div>
 
-    <!-- LABEL -->
-    <div class="row label-row">
-        <div class="label-meron">MERON</div>
-        <div class="label-wala">WALA</div>
-    </div>
+<div class="row label-row">
+<div class="label-meron">MERON</div>
+<div class="label-wala">WALA</div>
+</div>
 
-    <!-- PAYOUT -->
-    <div class="row">
-        <div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
-        <div class="half">PAYOUT: <span id="payoutWala">0</span></div>
-    </div>
+<div class="row">
+<div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
+<div class="half">PAYOUT: <span id="payoutWala">0</span></div>
+</div>
 
-    <!-- PLAYER BET -->
-    <div class="row">
-        <div class="half">
-            Your Bet: <span id="myMeron">0</span><br>
-            Win: <span id="winMeron">0</span>
-        </div>
-        <div class="half">
-            Your Bet: <span id="myWala">0</span><br>
-            Win: <span id="winWala">0</span>
-        </div>
-    </div>
+<div class="row">
+<div class="half">
+Your Bet: <span id="myMeron">0</span><br>
+Win: <span id="winMeron">0</span>
+</div>
+<div class="half">
+Your Bet: <span id="myWala">0</span><br>
+Win: <span id="winWala">0</span>
+</div>
+</div>
 
-    <!-- BET BUTTONS -->
-    <div class="bet-buttons">
-        <button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
-        <button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
-    </div>
+<div class="bet-buttons">
+<button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
+<button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
+</div>
 
-    <!-- BALANCE -->
-    <div class="balance-box">
-        Balance: <span id="balance">0</span>
-    </div>
+<div class="balance-box">
+Balance: <span id="balance">0</span>
+</div>
 
-    <!-- INPUT -->
-    <input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
+<input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
 
-    <!-- CHIPS -->
-    <div class="chips">
-        <button onclick="setAmount(20)">20</button>
-        <button onclick="setAmount(50)">50</button>
-        <button onclick="setAmount(100)">100</button>
-        <button onclick="setAmount(200)">200</button>
-        <button onclick="setAmount(500)">500</button>
-        <button onclick="setAmount(1000)">1000</button>
-        <button onclick="setAmount(2000)">2000</button>
-        <button onclick="setAmount(50000)">50000</button>
-    </div>
-
-    <!-- DRAW -->
-    <div class="draw-row">
-        <button onclick="placeBet('draw')" style="width:100%; margin-top:10px;">
-            BET DRAW
-        </button>
-    </div>
-
+<div class="chips">
+<button onclick="setAmount(20)">20</button>
+<button onclick="setAmount(50)">50</button>
+<button onclick="setAmount(100)">100</button>
+<button onclick="setAmount(200)">200</button>
+<button onclick="setAmount(500)">500</button>
+<button onclick="setAmount(1000)">1000</button>
 </div>
 
 </div>
-
-<footer>© 2024 Pitwarriors619</footer>
-
+</div>
 </div>
 
 <script>
+let payoutMeron = 0;
+let payoutWala = 0;
+
 function setAmount(val){
     document.getElementById('betAmount').value = val;
+    updatePreview();
 }
 
 function placeBet(side){
     const amount = Number(document.getElementById('betAmount').value);
-
-    if (!amount) return showSnackbar("Enter amount","warning");
-
-    showSnackbar(`Bet ${side.toUpperCase()} = ${amount}`,"success");
-
-    // TODO: connect API
+    if (!amount) return alert("Enter amount");
+    alert(`Bet ${side.toUpperCase()} = ${amount}`);
 }
+
+// 🔥 LIVE PREVIEW
+function updatePreview(){
+    const amount = Number(document.getElementById('betAmount').value) || 0;
+
+    document.getElementById('winMeron').textContent =
+        (amount * payoutMeron).toFixed(2);
+
+    document.getElementById('winWala').textContent =
+        (amount * payoutWala).toFixed(2);
+}
+
+document.getElementById('betAmount').addEventListener('input', updatePreview);
 
 async function fetchGame(){
     try{
@@ -262,12 +151,34 @@ async function fetchGame(){
         document.getElementById('totalMeron').textContent = data.totalMeron;
         document.getElementById('totalWala').textContent = data.totalWala;
 
-        // payout sample calc
+        const totalPool = data.totalMeron + data.totalWala;
+        const CUT = 0.915;
+
+        payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
+        payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+
         document.getElementById('payoutMeron').textContent =
-            (data.totalWala / data.totalMeron || 0).toFixed(2);
+            (payoutMeron * 100).toFixed(2);
 
         document.getElementById('payoutWala').textContent =
-            (data.totalMeron / data.totalWala || 0).toFixed(2);
+            (payoutWala * 100).toFixed(2);
+
+        const myMeron = Number(data.myMeron || 0);
+        const myWala = Number(data.myWala || 0);
+
+        document.getElementById('myMeron').textContent = myMeron;
+        document.getElementById('myWala').textContent = myWala;
+
+        // ✅ Only update win if no manual input (prevents override)
+        const currentInput = Number(document.getElementById('betAmount').value);
+
+        if (!currentInput){
+            document.getElementById('winMeron').textContent =
+                (myMeron * payoutMeron).toFixed(2);
+
+            document.getElementById('winWala').textContent =
+                (myWala * payoutWala).toFixed(2);
+        }
 
         const status = document.getElementById('betStatus');
         status.textContent = data.status;
@@ -280,25 +191,6 @@ async function fetchGame(){
 
 setInterval(fetchGame,3000);
 fetchGame();
-
-function toggleSidebar(){
-    document.getElementById('sidebar').classList.toggle('collapsed');
-}
-
-/* SNACKBAR */
-function showSnackbar(msg,type="success"){
-    let sb=document.getElementById("snackbar");
-    if(!sb){
-        sb=document.createElement("div");
-        sb.id="snackbar";
-        document.body.appendChild(sb);
-    }
-    sb.className="";
-    sb.textContent=msg;
-    sb.classList.add("show");
-    if(type!=="success") sb.classList.add(type);
-    setTimeout(()=>sb.classList.remove("show"),3000);
-}
 </script>
 
 </body>
