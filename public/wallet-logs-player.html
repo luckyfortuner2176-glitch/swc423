@@ -16,7 +16,7 @@
         <!-- MAIN -->
         <a href="player.html">🏠 Play / Dashboard</a>
         <a href="wallet-logs-player.html">📄 Wallet Transactions</a>
-        <a href="withdrawal-request.html">💸 Withdrawal Request</a>
+        <a href="#" onclick="openWithdrawModal()">💸 Withdrawal Request</a>
 
         <div class="category">Account</div>
         <a href="change-password-player.html">🔑 Change Password</a>
@@ -51,7 +51,19 @@
                 </table>
             </div>
         </div>
+        // MODAL FOR WITHDRAWAL REQUEST
+        <div id="withdrawModal" class="modal">
+            <div class="modal-content">
+                <h3>Withdrawal Request</h3>
 
+                <input type="number" id="withdrawAmount" placeholder="Enter points" />
+
+                <div style="margin-top:10px;">
+                    <button onclick="submitWithdraw()">Submit</button>
+                    <button onclick="closeWithdrawModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
         <footer>
             © 2024 Pitwarriors619. All rights reserved.
         </footer>
@@ -149,6 +161,51 @@
 
             } catch (err) {
                 console.error(err);
+            }
+        }
+        // Withdrawal Modal
+        function openWithdrawModal(){
+            document.getElementById('withdrawModal').style.display = 'flex';
+        }
+
+        function closeWithdrawModal(){
+            document.getElementById('withdrawModal').style.display = 'none';
+        }
+
+        async function submitWithdraw(){
+            const amount = Number(document.getElementById('withdrawAmount').value);
+            const balance = Number(document.getElementById('balance').textContent);
+
+            if (!amount || amount <= 0) {
+                return showSnackbar("Enter valid amount", "warning");
+            }
+
+            if (amount > balance) {
+                return showSnackbar("Insufficient balance", "error");
+            }
+
+            try {
+                const res = await fetch('/api/withdraw-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ amount })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Request failed");
+                }
+
+                showSnackbar("Withdrawal request submitted!");
+                closeWithdrawModal();
+
+                document.getElementById('withdrawAmount').value = '';
+
+            } catch (err) {
+                console.error(err);
+                showSnackbar(err.message, "error");
             }
         }
         checkSession();
