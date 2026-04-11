@@ -1023,3 +1023,154 @@ app.get('/api/withdrawal-count', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// ==========================
+// WITHDRAWAL REQUESTS API
+// ==========================
+app.get('/api/withdrawal-requests', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const result = await pool.query(`
+      SELECT wr.id, wr.points, wr.created_at,
+             u.username
+      FROM withdrawal_requests wr
+      JOIN users u ON u.id = wr.requester_id
+      WHERE wr.approver_id = $1
+      AND wr.status = 'pending'
+      ORDER BY wr.created_at DESC
+    `, [userId]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
+// APPROVE WITHDRAWAL API
+// ==========================
+app.post('/api/approve-withdrawal', isAuthenticated, async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const approverId = req.session.user.id;
+
+    // 🔍 Get request
+    const reqRes = await pool.query(`
+      SELECT * FROM withdrawal_requests WHERE id = $1
+    `, [id]);
+
+    if (reqRes.rows.length === 0) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    const request = reqRes.rows[0];
+
+    if (request.approver_id !== approverId) {
+      return res.status(403).json({ error: "Not allowed" });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: "Already processed" });
+    }
+
+    const amount = Number(request.points);
+
+    // 🔍 Get balances
+    const requester = await pool.query(
+      'SELECT points, username FROM users WHERE id=$1',
+      [request.requester_id]
+    );
+
+    const approver = await pool.query(
+      'SELECT points FROM users WHERE id=$1',
+      [approverId]
+    );
+
+    if (requester.rows[0].points < amount) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    const newRequesterBalance = Number(requester.rows[0].points) - amount;
+    const newApproverBalance = Number(approver.rows[0].points) + amount;
+
+    // =========================
+    // 🔁 TRANSACTION
+    // =========================
+    await pool.query('BEGIN');
+
+    // ➖ Deduct requester
+    await pool.query(
+      'UPDATE users SET points=$1 WHERE id=$2',
+      [newRequesterBalance, request.requester_id]
+    );
+
+    // ➕ Add to approver
+    await pool.query(
+      'UPDATE users SET points=$1 WHERE id=$2',
+      [newApproverBalance, approverId]
+    );
+
+    // 📝 Wallet logs
+    await pool.query(`
+      INSERT INTO wallet_transactions 
+      (user_id, type, amount, balance_after, description)
+      VALUES ($1,'debit',$2,$3,$4)
+    `, [
+      request.requester_id,
+      amount,
+      newRequesterBalance,
+      `Withdrawal approved`
+    ]);
+
+    await pool.query(`
+      INSERT INTO wallet_transactions 
+      (user_id, type, amount, balance_after, description)
+      VALUES ($1,'credit',$2,$3,$4)
+    `, [
+      approverId,
+      amount,
+      newApproverBalance,
+      `Received withdrawal`
+    ]);
+
+    // ✅ Update request
+    await pool.query(`
+      UPDATE withdrawal_requests
+      SET status='approved', updated_at=NOW()
+      WHERE id=$1
+    `, [id]);
+
+    await pool.query('COMMIT');
+
+    res.json({ message: "Approved" });
+
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: "Transaction failed" });
+  }
+});
+
+// ==========================
+// REJECT WITHDRAWAL API
+// ==========================
+app.post('/api/reject-withdrawal', isAuthenticated, async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    await pool.query(`
+      UPDATE withdrawal_requests
+      SET status='rejected', updated_at=NOW()
+      WHERE id=$1
+    `, [id]);
+
+    res.json({ message: "Rejected" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+

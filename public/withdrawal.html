@@ -43,8 +43,23 @@
         </div>
 
         <div class="content">
-            <h2>Withdrawal</h2>
-            <p>Coming soon...</p>
+            <h2>Withdrawal Requests</h2>
+
+            <div class="membership-card">
+                <table class="pending-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Points</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawTableBody">
+                        <!-- Data -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <footer>
@@ -74,14 +89,206 @@
                 console.error(err);
                 window.location.href = '/';
             }
+            loadPendingCount();
+            loadWithdrawCount();
         }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
         }
+        // =========================
+        // LOAD WITHDRAWAL REQUESTS
+        // =========================
+        async function loadWithdrawals() {
+            try {
+                const res = await fetch('/api/withdrawal-requests', {
+                    credentials: 'include'
+                });
 
+                const data = await res.json();
+                const table = document.getElementById('withdrawTableBody');
+                table.innerHTML = '';
+
+                if (data.length === 0) {
+                    table.innerHTML = `<tr><td colspan="4">No requests</td></tr>`;
+                    return;
+                }
+
+                data.forEach(req => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${req.username}</td>
+                        <td>${req.points}</td>
+                        <td>${new Date(req.created_at).toLocaleString()}</td>
+                        <td>
+                            <button onclick="approveWithdraw(${req.id})">Approve</button>
+                            <button onclick="rejectWithdraw(${req.id})">Reject</button>
+                        </td>
+                    `;
+
+                    table.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // =========================
+        // APPROVE
+        // =========================
+        async function approveWithdraw(id) {
+            try {
+                const res = await fetch('/api/approve-withdrawal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.error);
+                    return;
+                }
+
+                alert("Approved");
+                loadWithdrawals();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // =========================
+        // REJECT
+        // =========================
+        async function rejectWithdraw(id) {
+            try {
+                const res = await fetch('/api/reject-withdrawal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.error);
+                    return;
+                }
+
+                alert("Rejected");
+                loadWithdrawals();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        // =========================
+        // Hamburger & overlay
+        // =========================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active'); // show overlay
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        // =========================
+        // Load pending approvals count
+        // =========================
+        async function loadPendingCount() {
+            try {
+                const res = await fetch('/api/pending-count', {
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                const badge = document.getElementById('pendingBadge');
+
+                if (data.count > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = data.count;
+                } else {
+                    badge.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        // Close sidebar if click outside (mobile)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                if (!sidebar.contains(event.target) && !event.target.classList.contains('hamburger')) {
+                    closeSidebar();
+                }
+            }
+        });
+        
+        function showSnackbar(message, success = false) {
+            const snackbar = document.getElementById("snackbar");
+            snackbar.textContent = message;
+            snackbar.className = success ? "show success" : "show";
+
+            setTimeout(() => {
+                snackbar.className = snackbar.className.replace("show", "");
+            }, 3000);
+        }
+        // =========================
+        // Load withdrawal request count
+        // =========================
+        async function loadWithdrawCount() {
+            try {
+                const res = await fetch('/api/withdrawal-count', {
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                const badge = document.getElementById('withdrawBadge');
+
+                if (data.count > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = data.count;
+                } else {
+                    badge.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        loadWithdrawals();
         checkSession();
+        setInterval(loadWithdrawCount, 10000);
+        setInterval(loadPendingCount, 10000);
     </script>
 
 </body>
