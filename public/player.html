@@ -47,72 +47,80 @@
 <div id="snackbar"></div>
 <div class="main">
 <div class="content">
+<div class="game-layout">
 
-<div class="video-container">
-<iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
-</div>
+    <!-- LEFT: VIDEO -->
+    <div class="video-section">
+        <div class="video-container">
+            <iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
+        </div>
+    </div>
 
-<div class="betting-card">
+    <!-- RIGHT: BETTING -->
+    <div class="betting-section">
+        <div class="betting-card">
 
-<div class="row header-row">
-<div>BETTING</div>
-<div>FIGHT # <span id="fightNumber">0</span></div>
-</div>
+            <div class="row header-row">
+                <div>BETTING</div>
+                <div>FIGHT # <span id="fightNumber">0</span></div>
+            </div>
 
-<div class="row">
-<div>Status:</div>
-<div id="betStatus" class="status OPEN">OPEN</div>
-</div>
+            <div class="row">
+                <div>Status:</div>
+                <div id="betStatus" class="status OPEN">OPEN</div>
+            </div>
 
-<div class="row">
-<div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
-<div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
-</div>
+            <div class="row">
+                <div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
+                <div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
+            </div>
 
-<div class="row label-row">
-<div class="label-meron">MERON</div>
-<div class="label-wala">WALA</div>
-</div>
+            <div class="row label-row">
+                <div class="label-meron">MERON</div>
+                <div class="label-wala">WALA</div>
+            </div>
 
-<div class="row">
-<div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
-<div class="half">PAYOUT: <span id="payoutWala">0</span></div>
-</div>
+            <div class="row">
+                <div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
+                <div class="half">PAYOUT: <span id="payoutWala">0</span></div>
+            </div>
 
-<div class="row">
-<div class="half">
-Your Bet: <span id="myMeron">0</span><br>
-Win: <span id="winMeron">0</span>
-</div>
-<div class="half">
-Your Bet: <span id="myWala">0</span><br>
-Win: <span id="winWala">0</span>
-</div>
-</div>
+            <div class="row">
+                <div class="half">
+                    Your Bet: <span id="myMeron">0</span><br>
+                    Win: <span id="winMeron">0</span>
+                </div>
+                <div class="half">
+                    Your Bet: <span id="myWala">0</span><br>
+                    Win: <span id="winWala">0</span>
+                </div>
+            </div>
 
-<div class="bet-buttons">
-<button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
-<button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
-</div>
+            <div class="bet-buttons">
+                <button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
+                <button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
+            </div>
 
-<div class="balance-box">
-Balance: <span id="balance">0</span>
-</div>
+            <div class="balance-box">
+                Balance: <span id="balance">0</span>
+            </div>
 
-<input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
+            <input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
 
-<div class="chips">
-<button onclick="setAmount(20)">20</button>
-<button onclick="setAmount(50)">50</button>
-<button onclick="setAmount(100)">100</button>
-<button onclick="setAmount(200)">200</button>
-<button onclick="setAmount(500)">500</button>
-<button onclick="setAmount(1000)">1000</button>
-</div>
+            <div class="chips">
+                <button onclick="setAmount(20)">20</button>
+                <button onclick="setAmount(50)">50</button>
+                <button onclick="setAmount(100)">100</button>
+                <button onclick="setAmount(200)">200</button>
+                <button onclick="setAmount(500)">500</button>
+                <button onclick="setAmount(1000)">1000</button>
+            </div>
 
-</div>
-</div>
-</div>
+        </div>
+    </div>
+</div> <!-- game-layout -->
+</div> <!-- content -->
+</div> <!-- main -->
 
 <script>
     let payoutMeron = 0;
@@ -128,14 +136,13 @@ Balance: <span id="balance">0</span>
         const balance = Number(document.getElementById('balance').textContent);
 
         if (!amount || amount <= 0) {
-            showSnackbar("Enter valid amount");
-            return;
+            return showSnackbar("Enter valid amount", "warning");
         }
 
         if (amount > balance) {
             showSnackbar("Insufficient balance");
             return;
-        }if (!amount) return alert("Enter amount");
+        }
         alert(`Bet ${side.toUpperCase()} = ${amount}`);
     }
 
@@ -234,14 +241,17 @@ Balance: <span id="balance">0</span>
     function showSnackbar(message, type = "success") {
         const sb = document.getElementById("snackbar");
 
+        sb.className = ""; // RESET
+
         sb.textContent = message;
-        sb.className = "show";
 
         if(type === "error") sb.classList.add("error");
         if(type === "warning") sb.classList.add("warning");
 
+        sb.classList.add("show");
+
         setTimeout(()=>{
-            sb.className = sb.className.replace("show", "");
+            sb.classList.remove("show");
         },3000);
     }
     setInterval(fetchGame, 3000);
