@@ -210,13 +210,14 @@ Balance: <span id="balance">0</span>
         const res = await fetch('/api/dashboard-wallets',{credentials:'include'});
         const data = await res.json();
 
-        const balance = Number(data.points || 0);
+        const balance = Number(data.userBalance || 0);
 
         document.getElementById('balance').textContent = balance;
 
         if(balance <= 0){
             disableBetting("No balance. Contact your agent.");
         }
+        console.log("Wallet API:", data);
     }
     // 🚫 DISABLE BETTING
     function disableBetting(message){
@@ -243,9 +244,11 @@ Balance: <span id="balance">0</span>
             sb.className = sb.className.replace("show", "");
         },3000);
     }
-    setInterval(fetchGame,3000);
-    fetch('/api/place-bet')
+    setInterval(fetchGame, 3000);
+    setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
+
     fetchGame();
+    checkPlayerBalance(); // ✅ initial load
 </script>
 
 </body>
