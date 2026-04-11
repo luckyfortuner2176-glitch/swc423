@@ -115,7 +115,16 @@
                 <button onclick="setAmount(500)">500</button>
                 <button onclick="setAmount(1000)">1000</button>
             </div>
-
+            <div class="bet-buttons" style="margin-top:15px;">
+                <button class="bet-btn" style="background:#6b7280;" onclick="placeBet('draw')">
+                    BET DRAW
+                </button>
+            </div>
+            <div class="row">
+                <div class="total-box" style="background:#374151; width:100%;">
+                    DRAW: <span id="totalDraw">0</span>
+                </div>
+            </div>
         </div>
     </div>
 </div> <!-- game-layout -->
@@ -192,8 +201,9 @@
             document.getElementById('fightNumber').textContent = data.fightNumber;
             document.getElementById('totalMeron').textContent = data.totalMeron;
             document.getElementById('totalWala').textContent = data.totalWala;
+            document.getElementById('totalDraw').textContent = data.totalDraw || 0;
 
-            const totalPool = data.totalMeron + data.totalWala;
+            const totalPool = data.totalMeron + data.totalWala + (data.totalDraw || 0);
             const CUT = 0.915;
 
             payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;

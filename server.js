@@ -908,7 +908,8 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
         const totalsRes = await pool.query(`
             SELECT
                 COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "totalMeron",
-                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "totalWala"
+                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "totalWala",
+                COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS "totalDraw"
             FROM bets
             WHERE game_id = $1
         `, [game.id]);
@@ -919,7 +920,8 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
         const myRes = await pool.query(`
             SELECT
                 COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "myMeron",
-                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "myWala"
+                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "myWala",
+                COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS "myDraw"
             FROM bets
             WHERE game_id = $1 AND user_id = $2
         `, [game.id, userId]);
@@ -933,7 +935,8 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
             totalMeron: Number(totals.totalMeron),
             totalWala: Number(totals.totalWala),
             myMeron: Number(my.myMeron),
-            myWala: Number(my.myWala)
+            myWala: Number(my.myWala),
+            myDraw: Number(my.myDraw)
         });
 
     } catch (err) {
