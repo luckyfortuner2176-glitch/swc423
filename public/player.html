@@ -42,7 +42,7 @@
 .chips button { padding:6px 10px; font-size:12px; }
 </style>
 </head>
-
+<div id="snackbar"></div>
 <body class="dashboard-body">
 
 <div class="main">
@@ -125,7 +125,17 @@ Balance: <span id="balance">0</span>
 
     function placeBet(side){
         const amount = Number(document.getElementById('betAmount').value);
-        if (!amount) return alert("Enter amount");
+        const balance = Number(document.getElementById('balance').textContent);
+
+        if (!amount || amount <= 0) {
+            showSnackbar("Enter valid amount");
+            return;
+        }
+
+        if (amount > balance) {
+            showSnackbar("Insufficient balance");
+            return;
+        }if (!amount) return alert("Enter amount");
         alert(`Bet ${side.toUpperCase()} = ${amount}`);
     }
 
@@ -141,7 +151,7 @@ Balance: <span id="balance">0</span>
     }
 
     document.getElementById('betAmount').addEventListener('input', updatePreview);
-
+    // 🔥 LIVE GAME STATUS
     async function fetchGame(){
         try{
             const res = await fetch('/api/game-status',{credentials:'include'});
@@ -183,12 +193,56 @@ Balance: <span id="balance">0</span>
             const status = document.getElementById('betStatus');
             status.textContent = data.status;
             status.className = "status " + data.status;
-
+            if(data.status !== 'OPEN'){
+                disableBetting("Betting is closed");
+            }else{
+                document.querySelectorAll('.bet-btn').forEach(btn=>{
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                });
+            }
         }catch(e){
             console.error(e);
         }
     }
+    // 🚫 DISABLE BETTING
+    async function checkPlayerBalance(){
+        const res = await fetch('/api/dashboard-wallets',{credentials:'include'});
+        const data = await res.json();
 
+        const balance = Number(data.points || 0);
+
+        document.getElementById('balance').textContent = balance;
+
+        if(balance <= 0){
+            disableBetting("No balance. Contact your agent.");
+        }
+    }
+    // 🚫 DISABLE BETTING
+    function disableBetting(message){
+        document.querySelectorAll('.bet-btn').forEach(btn=>{
+            btn.disabled = true;
+            btn.style.opacity = 0.5;
+        });
+
+        if(message){
+            showSnackbar(message);
+        }
+    }
+    // 📢 SHOW SNACKBAR
+    function showSnackbar(message, type = "success") {
+        const sb = document.getElementById("snackbar");
+
+        sb.textContent = message;
+        sb.className = "show";
+
+        if(type === "error") sb.classList.add("error");
+        if(type === "warning") sb.classList.add("warning");
+
+        setTimeout(()=>{
+            sb.className = sb.className.replace("show", "");
+        },3000);
+    }
     setInterval(fetchGame,3000);
     fetch('/api/place-bet')
     fetchGame();
