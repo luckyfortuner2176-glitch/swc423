@@ -44,116 +44,115 @@
 </head>
 
 <body class="dashboard-body">
-<div id="snackbar"></div>
-<div class="topbar">
-    <button class="hamburger" onclick="openSidebar()">☰</button>
-    <div class="logo">Pitwarriors619</div>
-</div>
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-    <h2>Welcome, <span class="username">Player</span></h2>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <h2>Welcome, <span class="username">Player</span></h2>
 
-    <!-- MAIN -->
-    <a href="player.html">🏠 Play / Dashboard</a>
-    <a href="wallet-logs-player.html">📄 Wallet Transactions</a>
-    <a href="withdrawal-request.html">💸 Withdrawal Request</a>
+        <!-- MAIN -->
+        <a href="player.html">🏠 Play / Dashboard</a>
+        <a href="wallet-logs-player.html">📄 Wallet Transactions</a>
+        <a href="withdrawal-request.html">💸 Withdrawal Request</a>
 
-    <div class="category">Account</div>
-    <a href="change-password-player.html">🔑 Change Password</a>
-    <a href="/api/logout">🚪 Logout</a>
-</div>
-
-<!-- Overlay -->
-<div id="overlay" class="overlay" onclick="closeSidebar()"></div>
-<div class="main">
-<div class="content">
-<div class="game-layout">
-
-    <!-- LEFT: VIDEO -->
-    <div class="video-section">
-        <div class="video-container">
-            <iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
-        </div>
+        <div class="category">Account</div>
+        <a href="change-password-player.html">🔑 Change Password</a>
+        <a href="/api/logout">🚪 Logout</a>
     </div>
 
-    <!-- RIGHT: BETTING -->
-    <div class="betting-section">
-        <div class="betting-card">
-
-            <div class="row header-row">
-                <div>BETTING</div>
-                <div>FIGHT # <span id="fightNumber">0</span></div>
-            </div>
-
-            <div class="row">
-                <div>Status:</div>
-                <div id="betStatus" class="status OPEN">OPEN</div>
-            </div>
-
-            <div class="row">
-                <div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
-                <div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
-            </div>
-
-            <div class="row label-row">
-                <div class="label-meron">MERON</div>
-                <div class="label-wala">WALA</div>
-            </div>
-
-            <div class="row">
-                <div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
-                <div class="half">PAYOUT: <span id="payoutWala">0</span></div>
-            </div>
-
-            <div class="row">
-                <div class="half">
-                    Your Bet: <span id="myMeron">0</span><br>
-                    Win: <span id="winMeron">0</span>
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+    
+    <div class="main">
+        <div class="header">
+            <button class="hamburger" onclick="openSidebar()">☰</button>
+        </div>  
+        <div class="content">
+            <div id="snackbar"></div>
+            <div class="game-layout">
+                <!-- LEFT: VIDEO -->
+                <div class="video-section">
+                    <div class="video-container">
+                        <iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>
+                    </div>
                 </div>
-                <div class="half">
-                    Your Bet: <span id="myWala">0</span><br>
-                    Win: <span id="winWala">0</span>
+
+                <!-- RIGHT: BETTING -->
+                <div class="betting-section">
+                    <div class="betting-card">
+
+                        <div class="row header-row">
+                            <div>BETTING</div>
+                            <div>FIGHT # <span id="fightNumber">0</span></div>
+                        </div>
+
+                        <div class="row">
+                            <div>Status:</div>
+                            <div id="betStatus" class="status OPEN">OPEN</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
+                            <div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
+                        </div>
+
+                        <div class="row label-row">
+                            <div   div class="label-meron">MERON</div>
+                            <div class="label-wala">WALA</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
+                            <div class="half">PAYOUT: <span id="payoutWala">0</span></div>
+                        </div>
+
+                        <div class="row">
+                            <div class="half">
+                                Your Bet: <span id="myMeron">0</span><br>
+                                Win: <span id="winMeron">0</span>
+                            </div>
+                            <div class="half">
+                                Your Bet: <span id="myWala">0</span><br>
+                                Win: <span id="winWala">0</span>
+                            </div>
+                        </div>
+
+                        <div class="bet-buttons">
+                            <button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
+                            <button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
+                        </div>
+
+                        <div class="balance-box">
+                            Balance: <span id="balance">0</span>
+                        </div>
+
+                        <input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
+
+                        <div class="chips">
+                            <button onclick="setAmount(20)">20</button>
+                            <button onclick="setAmount(50)">50</button>
+                            <button onclick="setAmount(100)">100</button>
+                            <button onclick="setAmount(200)">200</button>
+                            <button onclick="setAmount(500)">500</button>
+                            <button onclick="setAmount(1000)">1000</button>
+                        </div>
+                        <div class="bet-buttons" style="margin-top:15px;">
+                            <button class="bet-btn" style="background:#6b7280;" onclick="placeBet('draw')">
+                                BET DRAW
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="total-box" style="background:#374151; width:100%;">
+                                DRAW: <span id="totalDraw">0</span>
+                            </div>
+                            <div class="half">PAYOUT: <span id="payoutDraw">0</span></div>
+                            <div class="half">
+                                Your Bet: <span id="myDraw">0</span><br>
+                                Win: <span id="winDraw">0</span>
+                            </div>
+                        </div>
                 </div>
             </div>
-
-            <div class="bet-buttons">
-                <button class="bet-btn bet-meron" onclick="placeBet('meron')">BET MERON</button>
-                <button class="bet-btn bet-wala" onclick="placeBet('wala')">BET WALA</button>
-            </div>
-
-            <div class="balance-box">
-                Balance: <span id="balance">0</span>
-            </div>
-
-            <input type="number" id="betAmount" class="amount-input" placeholder="Enter amount">
-
-            <div class="chips">
-                <button onclick="setAmount(20)">20</button>
-                <button onclick="setAmount(50)">50</button>
-                <button onclick="setAmount(100)">100</button>
-                <button onclick="setAmount(200)">200</button>
-                <button onclick="setAmount(500)">500</button>
-                <button onclick="setAmount(1000)">1000</button>
-            </div>
-            <div class="bet-buttons" style="margin-top:15px;">
-                <button class="bet-btn" style="background:#6b7280;" onclick="placeBet('draw')">
-                    BET DRAW
-                </button>
-            </div>
-            <div class="row">
-                <div class="total-box" style="background:#374151; width:100%;">
-                    DRAW: <span id="totalDraw">0</span>
-                </div>
-                <div class="half">PAYOUT: <span id="payoutDraw">0</span></div>
-                <div class="half">
-                    Your Bet: <span id="myDraw">0</span><br>
-                    Win: <span id="winDraw">0</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> <!-- game-layout -->
-</div> <!-- content -->
+        </div> <!-- game-layout -->
+    </div> <!-- content -->
 </div> <!-- main -->
 
 <script>
