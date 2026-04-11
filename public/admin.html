@@ -71,7 +71,7 @@
                     <div class="card wallet-card">
                         <div class="card-content">
                             <h3>Wallet Balance</h3>
-                            <p class="amount">0 Points</p>
+                            <p class="amount">0.00</p>
                         </div>
                         <div class="card-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
@@ -140,6 +140,12 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        function formatNumber(num) {
+            return Number(num || 0).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
         // =========================
         // Session check
         // =========================
@@ -265,26 +271,29 @@
                 const res = await fetch('/api/dashboard-wallets', { credentials: 'include' });
                 const data = await res.json();
 
-                // Update main wallet
-                document.querySelector('.wallet-card .amount').textContent = `${data.userBalance} Points`;
+                // Wallet
+                document.querySelector('.wallet-card .amount').textContent =
+                    formatNumber(data.userBalance);
 
-                // Update agents wallet
+                // Agents
                 const agentsCard = document.querySelector('.agents-card');
-                agentsCard.querySelector('.amount').textContent = `${data.agentsPoints} Points`;
+                agentsCard.querySelector('.amount').textContent =
+                    formatNumber(data.agentsPoints);
                 agentsCard.querySelector('.badge').textContent = data.agentsCount;
 
-                // Update players wallet
+                // Players
                 const playersCard = document.querySelector('.players-card');
-                playersCard.querySelector('.amount').textContent = `${data.playersPoints} Points`;
+                playersCard.querySelector('.amount').textContent =
+                    formatNumber(data.playersPoints);
                 playersCard.querySelector('.badge').textContent = data.playersCount;
-                
-                const commissionCard = document.querySelector('.commission-card');
 
+                // Commission
+                const commissionCard = document.querySelector('.commission-card');
                 commissionCard.querySelector('.amount').textContent =
-                    `${data.commissionEarnings} Points`;
+                    formatNumber(data.commissionEarnings);
 
                 commissionCard.querySelector('.rate-box').textContent =
-                    `${data.commissionRate}%`;
+                    `${Number(data.commissionRate || 0).toFixed(2)}%`;
 
             } catch (err) {
                 console.error(err);
