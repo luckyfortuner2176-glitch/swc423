@@ -199,10 +199,10 @@
 
             // 🔄 Refresh UI immediately
             document.getElementById('betAmount').value = '';
-            setTimeout(() => {
+            
                 fetchGame();
                 checkPlayerBalance();
-            }, 300);
+            
 
         } catch (err) {
             console.error(err);
