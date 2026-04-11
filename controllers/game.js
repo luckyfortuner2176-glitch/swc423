@@ -117,7 +117,7 @@ async function placeBet(userId, side, amount) {
             userId,
             amount,
             newBalance,
-            `Bet on ${side}`
+            `Bet on ${side} Game ${game.id}`
         ]);
 
         // ✅ STEP 6: COMMISSION
