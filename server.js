@@ -878,3 +878,66 @@ app.post('/api/place-bet', isAuthenticated, async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
+
+// ==========================
+// GAME STATUS API (🔥 REQUIRED)
+// ==========================
+app.get('/api/game-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+
+        // ✅ 1. GET OPEN GAME
+        const gameRes = await pool.query(
+            `SELECT * FROM games WHERE status='OPEN' LIMIT 1`
+        );
+
+        if (gameRes.rows.length === 0) {
+            return res.json({
+                fightNumber: 0,
+                status: "CLOSED",
+                totalMeron: 0,
+                totalWala: 0,
+                myMeron: 0,
+                myWala: 0
+            });
+        }
+
+        const game = gameRes.rows[0];
+
+        // ✅ 2. GET TOTAL BETS
+        const totalsRes = await pool.query(`
+            SELECT
+                COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "totalMeron",
+                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "totalWala"
+            FROM bets
+            WHERE game_id = $1
+        `, [game.id]);
+
+        const totals = totalsRes.rows[0];
+
+        // ✅ 3. GET USER BETS
+        const myRes = await pool.query(`
+            SELECT
+                COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "myMeron",
+                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "myWala"
+            FROM bets
+            WHERE game_id = $1 AND user_id = $2
+        `, [game.id, userId]);
+
+        const my = myRes.rows[0];
+
+        // ✅ 4. RETURN DATA
+        res.json({
+            fightNumber: game.fight_number,
+            status: game.status,
+            totalMeron: Number(totals.totalMeron),
+            totalWala: Number(totals.totalWala),
+            myMeron: Number(my.myMeron),
+            myWala: Number(my.myWala)
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
