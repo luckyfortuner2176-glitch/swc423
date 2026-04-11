@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Logs - Pitwarriors619</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="dashboard-body">
+
+    <!-- SIDEBAR (COPY SAME SIDEBAR HERE) -->
+    <div class="sidebar" id="sidebar">
+        <h2>Welcome, <span class="username">Player</span></h2>
+
+        <!-- MAIN -->
+        <a href="player.html">🏠 Play / Dashboard</a>
+        <a href="wallet-logs-player.html">📄 Wallet Transactions</a>
+        <a href="withdrawal-request.html">💸 Withdrawal Request</a>
+
+        <div class="category">Account</div>
+        <a href="change-password-player.html">🔑 Change Password</a>
+        <a href="/api/logout">🚪 Logout</a>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="header">
+            <div class="hamburger" onclick="toggleSidebar()">☰</div>
+        </div>
+
+        <div class="content">
+            <h2>Wallet Logs</h2>
+
+            <div class="table-wrapper">
+                <table class="styled-table" id="walletTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Balance After</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            © 2024 Pitwarriors619. All rights reserved.
+        </footer>
+
+    </div>
+
+    <script>
+        async function checkSession() {
+            try {
+                const res = await fetch('/api/dashboard', {
+                    credentials: 'include'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await res.json();
+
+                document.querySelectorAll('.username')
+                    .forEach(el => el.textContent = data.username);
+
+            } catch (err) {
+                console.error(err);
+                window.location.href = '/';
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        // close when clicking outside (mobile)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.querySelector('.hamburger');
+
+            if (window.innerWidth <= 768 &&
+                sidebar.classList.contains('active')) {
+
+                if (!sidebar.contains(event.target) &&
+                    !hamburger.contains(event.target)) {
+                    closeSidebar();
+                }
+            }
+        });
+
+        async function loadWalletLogs() {
+            try {
+                const res = await fetch('/api/my-wallet-transactions', {
+                    credentials: 'include'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await res.json();
+                const tbody = document.querySelector('#walletTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(tx => {
+                    const row = document.createElement('tr');
+
+                    const typeIcon = tx.type === 'credit' ? '↑' : '↓';
+
+                    row.innerHTML = `
+                        <td>${new Date(tx.created_at).toLocaleString()}</td>
+                        <td>${typeIcon} ${tx.type}</td>
+                        <td>${tx.amount}</td>
+                        <td>${tx.balance_after}</td>
+                        <td>${tx.description}</td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        checkSession();
+        loadWalletLogs();
+    </script>
+
+</body>
+</html>
