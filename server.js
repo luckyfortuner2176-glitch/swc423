@@ -947,3 +947,56 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 });
+// ==========================
+// WITHDRAW REQUEST API
+// ==========================
+app.post('/api/withdraw-request', isAuthenticated, async (req, res) => {
+    const userId = req.session.user.id;
+    const { amount } = req.body;
+    const pending = await pool.query(`
+        SELECT * FROM withdrawal_requests
+        WHERE requester_id=$1 AND status='pending'
+    `, [userId]);
+
+    if (pending.rows.length > 0) {
+        return res.status(400).json({ error: "You already have a pending request" });
+    }
+    try {
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: "Invalid amount" });
+        }
+
+        // 🔍 Get user + parent (approver)
+        const userRes = await pool.query(
+            'SELECT parent_id, points FROM users WHERE id=$1',
+            [userId]
+        );
+
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const user = userRes.rows[0];
+
+        if (amount > user.points) {
+            return res.status(400).json({ error: "Insufficient balance" });
+        }
+
+        // 📝 Insert withdrawal request
+        await pool.query(`
+            INSERT INTO withdrawal_requests
+            (requester_id, approver_id, points)
+            VALUES ($1, $2, $3)
+        `, [
+            userId,
+            user.parent_id, // agent approves
+            amount
+        ]);
+
+        res.json({ message: "Request submitted" });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
