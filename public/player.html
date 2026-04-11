@@ -131,7 +131,7 @@
         updatePreview();
     }
 
-    function placeBet(side){
+    async function placeBet(side){
         const amount = Number(document.getElementById('betAmount').value);
         const balance = Number(document.getElementById('balance').textContent);
 
@@ -140,10 +140,35 @@
         }
 
         if (amount > balance) {
-            showSnackbar("Insufficient balance");
+            showSnackbar("Insufficient balance", "error");
             return;
         }
-        showSnackbar(`Bet ${side.toUpperCase()} = ${amount}`);
+
+        try {
+            const res = await fetch('/api/place-bet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ side: side.toUpperCase(), amount })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Bet failed");
+            }
+
+            showSnackbar("Bet placed successfully!");
+
+            // 🔄 Refresh UI immediately
+            document.getElementById('betAmount').value = '';
+            fetchGame();
+            checkPlayerBalance();
+
+        } catch (err) {
+            console.error(err);
+            showSnackbar(err.message, "error");
+        }
     }
 
     // 🔥 LIVE PREVIEW
