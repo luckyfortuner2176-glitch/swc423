@@ -233,24 +233,27 @@
     async function startGame(){
         const fightNumber = document.getElementById('fightInput').value;
 
-        await fetch('/api/declarator/start-game',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({fightNumber})
+        await fetch('/api/start-game', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ fightNumber })
         });
 
         closeStartModal();
     }
 
-    async function closeGame(){
-        await fetch('/api/declarator/close-game',{method:'POST'});
-    }
+    await fetch('/api/close-game', {
+        method: 'POST',
+        credentials: 'include'
+    });
 
     async function declareWinner(side){
-        await fetch('/api/declarator/declare-winner',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({winner:side})
+        await fetch('/api/declare-winner', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ winner: side })
         });
     }
 
