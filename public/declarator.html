@@ -113,14 +113,23 @@
         <div class="total-box meron-bg">MERON: <span id="totalMeron">0</span></div>
         <div class="total-box wala-bg">WALA: <span id="totalWala">0</span></div>
     </div>
-
+    <div class="row">
+        <div class="half">PAYOUT: <span id="payoutMeron">0</span></div>
+        <div class="half">PAYOUT: <span id="payoutWala">0</span></div>
+    </div>
+    <div class="row">
+        <div class="total-box" style="background:#374151; width:100%;">
+            DRAW: <span id="totalDraw">0</span>
+        </div>
+        <div class="half">DRAW PAYOUT: <span id="payoutDraw">0</span></div>
+    </div>
     <!-- PLAYER TOTAL -->
     <div class="row">
         <div style="width:100%; text-align:center;">
             PLAYER TOTAL: <span id="playerTotal">0</span>
         </div>
     </div>
-
+    
     <!-- CHIPS -->
     <div class="chips">
         <button onclick="placeChip(5234)">5234</button>
@@ -128,9 +137,16 @@
         <button onclick="placeChip(22653)">22653</button>
         <button onclick="placeChip(32759)">32759</button>
         <button onclick="placeChip(52785)">52785</button>
-        <button onclick="placeChip(10488)">10488</button>
+        <button onclick="placeChip(104880)">104880</button>
     </div>
-
+    <div class="row">
+        <div style="width:100%; text-align:center;">
+            PLAYER BETS → 
+            MERON: <span id="playerMeron">0</span> |
+            WALA: <span id="playerWala">0</span> |
+            DRAW: <span id="playerDraw">0</span>
+        </div>
+    </div>
     <!-- CONTROL BUTTONS -->
     <div class="bet-buttons">
         <button class="bet-btn" style="background:#22c55e;" onclick="openStartModal()">START GAME</button>
@@ -149,8 +165,10 @@
         <input type="text" id="headerMessage" placeholder="Header message" style="width:100%; padding:8px;">
         <button onclick="setHeader()">Update Header</button>
 
-        <button onclick="toggleStream(true)">Stream ON</button>
-        <button onclick="toggleStream(false)">Stream OFF</button>
+        <div class="bet-buttons">
+            <button class="bet-btn" onclick="toggleStream(true)">Stream ON</button>
+            <button class="bet-btn" onclick="toggleStream(false)">Stream OFF</button>
+        </div>
     </div>
 
 </div>
@@ -252,7 +270,56 @@ function closeSidebar() {
     document.getElementById('sidebar').classList.remove('active');
     document.getElementById('overlay').classList.remove('active');
 }
+let payoutMeron = 0;
+let payoutWala = 0;
+let payoutDraw = 0;
 
+async function fetchGame(){
+    const res = await fetch('/api/game-status',{credentials:'include'});
+    const data = await res.json();
+
+    document.getElementById('fightNumber').textContent = data.fightNumber;
+
+    document.getElementById('totalMeron').textContent = data.totalMeron;
+    document.getElementById('totalWala').textContent = data.totalWala;
+    document.getElementById('totalDraw').textContent = data.totalDraw || 0;
+
+    // PLAYER ONLY BETS
+    document.getElementById('playerMeron').textContent = data.playerMeron || 0;
+    document.getElementById('playerWala').textContent = data.playerWala || 0;
+    document.getElementById('playerDraw').textContent = data.playerDraw || 0;
+
+    const totalPool =
+        data.totalMeron +
+        data.totalWala +
+        (data.totalDraw || 0);
+
+    const CUT = 0.915;
+
+    payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
+    payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+    payoutDraw = 8;
+
+    document.getElementById('payoutMeron').textContent = (payoutMeron * 100).toFixed(2);
+    document.getElementById('payoutWala').textContent = (payoutWala * 100).toFixed(2);
+    document.getElementById('payoutDraw').textContent = payoutDraw + "x";
+
+    const status = document.getElementById('betStatus');
+    status.textContent = data.status;
+    status.className = "status " + data.status;
+
+    // BUTTON LOGIC
+    const declareButtons = document.querySelectorAll('[onclick^="declareWinner"]');
+
+    if(data.status === 'CLOSED'){
+        declareButtons.forEach(btn=>btn.disabled = false);
+    } else {
+        declareButtons.forEach(btn=>btn.disabled = true);
+    }
+}
+
+setInterval(fetchGame, 3000);
+fetchGame();
 </script>
 
 </body>
