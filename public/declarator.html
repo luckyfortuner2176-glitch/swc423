@@ -317,7 +317,7 @@
     }
     let payoutMeron = 0;
     let payoutWala = 0;
-    let payoutDraw = 0;
+    
 
     async function fetchGame(){
         const res = await fetch('/api/game-status',{credentials:'include'});
@@ -346,11 +346,11 @@
 
         payoutMeron = totalMeron > 0 ? (totalPool / totalMeron) * CUT : 0;
         payoutWala = totalWala > 0 ? (totalPool / totalWala) * CUT : 0;
-        payoutDraw = 8;
+        
 
         document.getElementById('payoutMeron').textContent = formatNumber(payoutMeron);
         document.getElementById('payoutWala').textContent = formatNumber(payoutWala);
-        document.getElementById('payoutDraw').textContent = payoutDraw + "x";
+        
 
         const status = document.getElementById('betStatus');
         status.textContent = data.status;
