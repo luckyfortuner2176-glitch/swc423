@@ -938,7 +938,7 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
                 COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "playerWala",
                 COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS "playerDraw"
             FROM bets
-            WHERE game_id = $1 AND AND is_dummy = false
+            WHERE game_id = $1 AND is_dummy = false
         `, [game.id]);
 
         const playerBets = playerRes.rows[0];
