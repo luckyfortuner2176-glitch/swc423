@@ -336,19 +336,20 @@
 
         document.getElementById('balance').textContent = formatNumber(balance);
         document.getElementById('playerTotal').textContent = formatNumber(playerTotal);
-        const totalPool =
-            data.totalMeron +
-            data.totalWala +
-            (data.totalDraw || 0);
+        const totalMeron = Number(data.totalMeron) || 0;
+        const totalWala = Number(data.totalWala) || 0;
+        const totalDraw = Number(data.totalDraw) || 0;
+
+        const totalPool = totalMeron + totalWala + totalDraw;
 
         const CUT = 0.915;
 
-        payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
-        payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+        payoutMeron = totalMeron > 0 ? (totalPool / totalMeron) * CUT : 0;
+        payoutWala = totalWala > 0 ? (totalPool / totalWala) * CUT : 0;
         payoutDraw = 8;
 
-        document.getElementById('payoutMeron').textContent = formatNumber(payoutMeron * 100);
-        document.getElementById('payoutWala').textContent = formatNumber(payoutWala * 100);
+        document.getElementById('payoutMeron').textContent = formatNumber(payoutMeron);
+        document.getElementById('payoutWala').textContent = formatNumber(payoutWala);
         document.getElementById('payoutDraw').textContent = payoutDraw + "x";
 
         const status = document.getElementById('betStatus');
