@@ -243,10 +243,12 @@
         closeStartModal();
     }
 
+    async function closeGame(){
     await fetch('/api/close-game', {
         method: 'POST',
         credentials: 'include'
     });
+}
 
     async function declareWinner(side){
         await fetch('/api/declare-winner', {
