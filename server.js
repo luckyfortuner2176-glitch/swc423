@@ -1266,35 +1266,47 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    stopDummyEngine();
-
-    const result = await pool.query(`
-      UPDATE games
-      SET status='CLOSED'
-      WHERE status='OPEN'
-      RETURNING *
+    // 1. FIND OPEN GAME FIRST
+    const gameRes = await pool.query(`
+      SELECT * FROM games WHERE status='OPEN' ORDER BY created_at DESC LIMIT 1
     `);
 
-    // ✅ ADD YOUR CHECK HERE
-    if (result.rows.length === 0) {
+    if (gameRes.rows.length === 0) {
       return res.status(400).json({ error: "No open game to close" });
     }
 
+    const game = gameRes.rows[0];
+
+    // 2. STOP ENGINE SAFELY (IMPORTANT)
+    try {
+      stopDummyEngine();
+    } catch (e) {
+      console.error("Dummy engine stop error:", e);
+    }
+
+    // 3. UPDATE SPECIFIC GAME
+    const updateRes = await pool.query(`
+      UPDATE games
+      SET status='CLOSED'
+      WHERE id=$1
+      RETURNING *
+    `, [game.id]);
+
     await upsertActiveEvent({
-      gameId: result.rows[0].id,
+      gameId: game.id,
       eventName: null,
       announcement: `Betting Closed`,
       status: 'ACTIVE'
     });
 
-    res.json({
+    return res.json({
       message: "Betting closed",
-      game: result.rows[0]
+      game: updateRes.rows[0]
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("CLOSE GAME ERROR:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 // ==========================
