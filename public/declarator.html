@@ -32,8 +32,24 @@
 .bet-buttons { display:flex; gap:10px; margin-top:10px; }
 .bet-btn { flex:1; padding:12px; font-weight:bold; }
 
-.balance-box { margin-top:10px; padding:10px; background:#0f172a; border:1px solid #14b8a6; border-radius:6px; text-align:center; }
-
+.balance-box {
+    width: 100%;
+    padding: 0; /* remove padding */
+    background: transparent;
+    border: none;
+}
+.amount-input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 2px solid #14b8a6;
+    background: #020617;
+    color: #22c55e;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+    box-sizing: border-box;
+}
 .chips { display:flex; gap:5px; overflow-x:auto; margin-top:10px; }
 .chips button { padding:6px 10px; font-size:12px; }
 
@@ -225,14 +241,18 @@ button:disabled {
             document.querySelectorAll('.username')
                 .forEach(el => el.textContent = data.username);
             
-            userId = data.id; 
+            userId = data.id;
+
+            
 
             // 🔥 ROLE PROTECTION
             if (requiredRole && data.role !== requiredRole) {
                 showSnackbar("Unauthorized access");
                 window.location.href = '/';
             }
-
+            // ✅ LOAD BALANCE AFTER USER IS KNOWN
+            fetchBalance();
+            setInterval(fetchBalance, 3000);
         } catch (err) {
             console.error(err);
             window.location.href = '/';
@@ -410,7 +430,7 @@ button:disabled {
     async function placeBet(side){
         const amount = Number(document.getElementById('betAmount').value);
         if (game.status !== 'OPEN') {
-            throw new Error("Betting is closed");
+            return showSnackbar("Betting is closed", "warning");
         }
         if(!amount || amount <= 0){
             showSnackbar("Enter valid amount");
@@ -430,12 +450,20 @@ button:disabled {
         document.getElementById('betAmount').value = '';
     }
     async function fetchBalance(){
-        const res = await fetch(`/api/wallet/${userId}`, {
+    try{
+        const res = await fetch('/api/dashboard-wallets', {
             credentials:'include'
         });
+
         const data = await res.json();
-        document.getElementById('balance').textContent = formatNumber(data.balance);
+
+        const balance = Number(data.userBalance ?? 0);
+        document.getElementById('balance').textContent = formatNumber(balance);
+
+    }catch(err){
+        console.error(err);
     }
+}
     // 📢 SHOW SNACKBAR
     function showSnackbar(message, type = "success") {
         const sb = document.getElementById("snackbar");
