@@ -108,9 +108,25 @@ button:disabled {
 
 <!-- VIDEO (UNCHANGED) -->
 <div class="video-section">
+    <div id="eventHeader" style="
+        text-align:center;
+        font-size:20px;
+        font-weight:bold;
+        margin-bottom:10px;
+        color:#22c55e;
+    ">
+        LOADING EVENT...
+    </div>
     <div class="video-container">
         <iframe src="https://wc3.sputnikview.live/hls/stream/index.m3u8" allowfullscreen></iframe>
     </div>
+    <marquee id="announcementBar" style="
+    margin-top:5px;
+    color:#facc15;
+    font-weight:bold;
+">
+    Welcome to Pitwarriors619
+</marquee>
 </div>
 
 <!-- BETTING / CONTROL -->
@@ -178,7 +194,7 @@ button:disabled {
     <div class="control-panel">
         <input type="text" id="headerMessage" placeholder="Header message" style="width:100%; padding:8px;">
         <button onclick="setHeader()">Update Header</button>
-
+        <button onclick="setGameDetails()">Reset Game Details</button>
         <div class="bet-buttons">
             <button class="bet-btn" onclick="toggleStream(true)">Stream ON</button>
             <button class="bet-btn" onclick="toggleStream(false)">Stream OFF</button>
@@ -276,8 +292,13 @@ button:disabled {
                 showSnackbar(data.error || "Failed to start game");
                 return;
             }
-
-            showSnackbar("Game started!");
+            await fetch('/api/declarator/set-header',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    message: `Fight #${fightNumber} is now OPEN`
+                })
+            });
             closeStartModal();
 
         } catch (err) {
@@ -299,7 +320,13 @@ button:disabled {
             return;
         }
 
-        showSnackbar("Game closed!");
+        await fetch('/api/declarator/set-header',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: `Betting is now CLOSED`
+            })
+        });
     }
 
 
@@ -319,7 +346,13 @@ button:disabled {
                 return;
             }
 
-            showSnackbar("Winner declared!");
+            await fetch('/api/declarator/set-header',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    message: `${side} WINS!`
+                })
+            });
         } catch (err) {
             console.error(err);
             showSnackbar("Network error");
@@ -332,8 +365,10 @@ button:disabled {
         await fetch('/api/declarator/set-header',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({message})
+            body: JSON.stringify({ message })
         });
+
+        showSnackbar("Announcement updated!");
     }
 
     async function toggleStream(state){
@@ -474,9 +509,63 @@ button:disabled {
             sb.classList.remove("show");
         },3000);
     }
+    // 📢 FETCH ACTIVE EVENT
+    async function fetchEvent(){
+        try{
+            const res = await fetch('/api/active-event');
+            const data = await res.json();
+
+            document.getElementById('eventHeader').textContent =
+                data.event_name || "NO EVENT";
+
+            document.getElementById('announcementBar').textContent =
+                data.announcement || "Welcome Players";
+
+        }catch(err){
+            console.error(err);
+        }
+    }
+    // 📢 SET GAME DETAILS (FOR NOW JUST EVENT NAME)
+    async function setGameDetails(){
+        const eventName = prompt("Enter Event Name:");
+        if(!eventName) return;
+
+        await fetch('/api/declarator/set-event',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ event_name: eventName })
+        });
+
+        showSnackbar("Event updated!");
+    }
+    // 📢 FETCH ACTIVE EVENT
+    async function fetchActiveEvent(){
+        try{
+            const res = await fetch('/api/active-event');
+            const data = await res.json();
+
+            if(data.event_name){
+                document.getElementById('eventName').textContent = data.event_name;
+            }
+
+            if(data.announcement){
+                document.getElementById('marqueeTop').textContent = data.announcement;
+                document.getElementById('marqueeBottom').textContent = data.announcement;
+            }
+
+        }catch(e){
+            console.error(e);
+        }
+    }
+
     checkSession('declarator');
     setInterval(fetchGame, 3000);
     fetchGame();
+    setInterval(fetchEvent, 3000);
+    fetchEvent();
+    setInterval(fetchActiveEvent, 3000);
+    fetchActiveEvent();
+
 </script>
 
 </body>
