@@ -50,6 +50,90 @@ const upsertActiveEvent = async ({ gameId, event_name, announcement }) => {
           updated_at = NOW()
       WHERE id = 1
     `, [gameId, event_name, announcement]);
+    // ==========================
+    // 💰 SETTLE GAME FUNCTION
+    // ==========================
+    const settleGame = async (gameId, winner) => {
+
+      // ❌ HANDLE CANCELLED (refund all)
+      if (winner === 'CANCELLED') {
+        const bets = await pool.query(`
+          SELECT user_id, amount FROM bets WHERE game_id = $1
+        `, [gameId]);
+
+        for (const bet of bets.rows) {
+          await pool.query(`
+            UPDATE users SET points = points + $1 WHERE id = $2
+          `, [bet.amount, bet.user_id]);
+        }
+
+        return;
+      }
+
+      // 1. GET ALL BETS
+      const betsRes = await pool.query(`
+        SELECT user_id, side, amount
+        FROM bets
+        WHERE game_id = $1
+      `, [gameId]);
+
+      const bets = betsRes.rows;
+
+      // 2. GET TOTAL POOLS
+      const totalsRes = await pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS meron,
+          COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS wala,
+          COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS draw
+        FROM bets
+        WHERE game_id = $1
+      `, [gameId]);
+
+      const totals = totalsRes.rows[0];
+
+      const totalPool =
+        Number(totals.meron) +
+        Number(totals.wala) +
+        Number(totals.draw);
+
+      const CUT = 0.915;
+
+      const payouts = {
+        MERON: totals.meron ? (totalPool / totals.meron) * CUT : 0,
+        WALA: totals.wala ? (totalPool / totals.wala) * CUT : 0,
+        DRAW: 8
+      };
+
+      // ❌ SAFETY: no winners
+      if (!payouts[winner]) return;
+
+      // 3. PROCESS WINNERS
+      for (const bet of bets) {
+        if (bet.side !== winner) continue;
+
+        const winAmount = bet.amount * payouts[winner];
+
+        // ➕ ADD WINNINGS
+        await pool.query(`
+          UPDATE users
+          SET points = points + $1
+          WHERE id = $2
+        `, [winAmount, bet.user_id]);
+
+        // 📝 LOG
+        await pool.query(`
+          INSERT INTO wallet_transactions
+          (user_id, type, amount, balance_after, description)
+          VALUES ($1, 'credit', $2,
+            (SELECT points FROM users WHERE id=$1),
+            $3)
+        `, [
+          bet.user_id,
+          winAmount,
+          `Win - ${winner}`
+        ]);
+      }
+    };
   }
 };
 
@@ -1333,7 +1417,7 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     await upsertActiveEvent({
       gameId: result.rows[0].id,
       event_name: "",
-      announcement: `Winner: ${winner}`,
+      announcement: `${winner} WINS!`,
     
     });
     res.json({
@@ -1345,6 +1429,16 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
+  const result = await pool.query(`
+    UPDATE games
+    SET winner=$1, status='RESOLVED'
+    WHERE status='CLOSED'
+    RETURNING *
+  `, [winner]);
+  const gameId = result.rows[0].id;
+
+  // 🔥 SETTLE GAME (PAY WINNERS)
+  await settleGame(gameId, winner);
 });
 // ==========================
 //  ACTIVE EVENT API
