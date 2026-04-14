@@ -1241,7 +1241,7 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
 
     await upsertActiveEvent({
       gameId: result.rows[0].id,
-      event_name: "Pitwarriors619", // or keep existing
+      event_name: "",
       announcement: `Game Started - Fight #${fightNumber}`
     });
 
@@ -1293,7 +1293,7 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
 
     await upsertActiveEvent({
       gameId: game.id,
-      event_name: "Pitwarriors619",
+      event_name: "",
       announcement: `Betting Closed`,
       
     });
@@ -1332,7 +1332,7 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     }
     await upsertActiveEvent({
       gameId: result.rows[0].id,
-      event_name: "Pitwarriors619",
+      event_name: "",
       announcement: `Winner: ${winner}`,
     
     });
