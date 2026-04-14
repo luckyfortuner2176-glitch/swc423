@@ -35,7 +35,7 @@ const upsertActiveEvent = async ({ gameId, event_name, announcement, status }) =
     await pool.query(`
       INSERT INTO active_event (id, game_id, event_name, announcement, status)
       VALUES (1, $1, $2, $3, $4)
-    `, [gameId, event_name, announcement, status || 'ACTIVE']);
+    `, [gameId, event_name, announcement, status || 'OPEN']);
   } else {
     await pool.query(`
       UPDATE active_event
@@ -45,7 +45,7 @@ const upsertActiveEvent = async ({ gameId, event_name, announcement, status }) =
           status = $4,
           updated_at = NOW()
       WHERE id = 1
-    `, [gameId, event_name, announcement, status || 'ACTIVE']);
+    `, [gameId, event_name, announcement, status || 'OPEN']);
   }
 };
 
@@ -1239,7 +1239,7 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
       gameId: result.rows[0].id,
       event_name: "Pitwarriors619", // or keep existing
       announcement: `Game Started - Fight #${fightNumber}`,
-      status: 'ACTIVE'
+      status: 'OPEN'
     });
 
     res.json({
