@@ -1275,7 +1275,7 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
       RETURNING *
     `);
 
-    // ✅ HANDLE NO OPEN GAME
+    // ✅ ADD YOUR CHECK HERE
     if (result.rows.length === 0) {
       return res.status(400).json({ error: "No open game to close" });
     }
