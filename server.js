@@ -1292,7 +1292,7 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
       gameId: game.id,
       event_name: null,
       announcement: `Betting Closed`,
-      status: 'ACTIVE'
+      status: 'CLOSED'
     });
 
     return res.json({
@@ -1331,7 +1331,7 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
       gameId: result.rows[0].id,
       event_name: null,
       announcement: `Winner: ${winner}`,
-      status: 'ACTIVE'
+      status: 'RESOLVED'
     });
     res.json({
       message: "Winner declared",
