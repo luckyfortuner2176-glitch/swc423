@@ -138,14 +138,10 @@ button:disabled {
         <div>FIGHT # <span id="fightNumber">0</span></div>
         <div id="betStatus" class="status OPEN">WAITING</div>
     </div>
-    <!-- START GAME MODAL -->
-    <div id="startModal" class="modal">
-        <div class="modal-content">
-            <h3>Start Game</h3>
-            <input type="number" id="fightInput" placeholder="Fight Number">
-            <button onclick="startGame()">Start</button>
-            <button onclick="closeStartModal()">Cancel</button>
-        </div>
+    <!-- CONTROL BUTTONS -->
+    <div class="bet-buttons">
+        <button class="bet-btn" style="background:#22c55e;" onclick="openStartModal()">START GAME</button>
+        <button class="bet-btn" style="background:#ef4444;" onclick="closeGame()">CLOSE GAME</button>
     </div>
     <div>CHOOSE WINNER:</div>
     <div class="bet-buttons">
@@ -190,11 +186,7 @@ button:disabled {
         <button onclick="placeChip(104880)">104880</button>
     </div>
     
-    <!-- CONTROL BUTTONS -->
-    <div class="bet-buttons">
-        <button class="bet-btn" style="background:#22c55e;" onclick="openStartModal()">START GAME</button>
-        <button class="bet-btn" style="background:#ef4444;" onclick="closeGame()">CLOSE GAME</button>
-    </div>
+   
 
     
 
@@ -221,7 +213,15 @@ button:disabled {
 
 </div>
 
-
+<!-- START GAME MODAL -->
+<div id="startModal" class="modal">
+    <div class="modal-content">
+        <h3>Start Game</h3>
+        <input type="number" id="fightInput" placeholder="Fight Number">
+        <button onclick="startGame()">Start</button>
+        <button onclick="closeStartModal()">Cancel</button>
+    </div>
+</div>
 
 <script>
     let game = {};
