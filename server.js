@@ -1418,6 +1418,31 @@ app.post('/api/declarator/set-event', isAuthenticated, async (req, res) => {
   }
 });
 // ==========================
+// TOGGLE STREAM API (DECLARATOR ONLY)
+// ==========================
+app.post('/api/declarator/toggle-stream', isAuthenticated, async (req, res) => {
+  try {
+    if (req.session.user.role !== 'declarator') {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const { enabled } = req.body;
+
+    await pool.query(`
+      UPDATE active_event
+      SET stream_enabled = $1,
+          updated_at = NOW()
+      WHERE id = 1
+    `, [enabled]);
+
+    res.json({ message: "Stream updated" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
 // START SERVER
 // ==========================
 const PORT = process.env.PORT || 3000;

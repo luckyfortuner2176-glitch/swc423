@@ -431,7 +431,7 @@ button:disabled {
             // ✅ FIX STATUS
             const status = document.getElementById('betStatus');
             status.textContent = data.status;
-            status.className = "status " + data.status;
+            status.className = "status " + String(data.status).toUpperCase();
 
             // ✅ ENABLE DECLARE BUTTONS
             const declareButtons = document.querySelectorAll('.declare-btn');
@@ -538,33 +538,14 @@ button:disabled {
 
         showSnackbar("Event updated!");
     }
-    // 📢 FETCH ACTIVE EVENT
-    async function fetchActiveEvent(){
-        try{
-            const res = await fetch('/api/active-event');
-            const data = await res.json();
-
-            if(data.event_name){
-                document.getElementById('event_name').textContent = data.event_name;
-            }
-
-            if(data.announcement){
-                document.getElementById('marqueeTop').textContent = data.announcement;
-                document.getElementById('marqueeBottom').textContent = data.announcement;
-            }
-
-        }catch(e){
-            console.error(e);
-        }
-    }
+    
 
     checkSession('declarator');
     setInterval(fetchGame, 3000);
     fetchGame();
     setInterval(fetchEvent, 3000);
     fetchEvent();
-    setInterval(fetchActiveEvent, 3000);
-    fetchActiveEvent();
+   
 
 </script>
 
