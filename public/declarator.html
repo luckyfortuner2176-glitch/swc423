@@ -316,7 +316,7 @@ button:disabled {
         const data = await res.json();
 
         if (!res.ok) {
-            showSnackbar(data.error || "Failed to close game");
+            showSnackbar(data.error || "Failed to close game", "error");
             return;
         }
 

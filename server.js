@@ -1265,20 +1265,28 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
     if (req.session.user.role !== 'declarator') {
       return res.status(403).json({ error: "Unauthorized" });
     }
+
     stopDummyEngine();
+
     const result = await pool.query(`
       UPDATE games
       SET status='CLOSED'
       WHERE status='OPEN'
       RETURNING *
     `);
-    
+
+    // ✅ HANDLE NO OPEN GAME
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "No open game to close" });
+    }
+
     await upsertActiveEvent({
       gameId: result.rows[0].id,
       eventName: null,
       announcement: `Betting Closed`,
       status: 'ACTIVE'
     });
+
     res.json({
       message: "Betting closed",
       game: result.rows[0]
@@ -1307,7 +1315,10 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
       WHERE status='CLOSED'
       RETURNING *
     `, [winner]);
-
+    // ✅ ADD THIS HERE
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "No closed game to resolve" });
+    }
     await upsertActiveEvent({
       gameId: result.rows[0].id,
       eventName: null,
