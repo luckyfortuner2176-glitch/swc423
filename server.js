@@ -1446,10 +1446,18 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     // 🔥 VERY IMPORTANT (THIS WAS MISSING)
     await settleGame(gameId, winner);
 
+    let announcementText = "";
+
+    if (winner === "CANCELLED") {
+      announcementText = "GAME CANCELLED - ALL BETS REFUNDED";
+    } else {
+      announcementText = `${winner} WINS!`;
+    }
+
     await upsertActiveEvent({
       gameId: gameId,
       event_name: "",
-      announcement: `${winner} WINS!`,
+      announcement: announcementText,
     });
 
     res.json({
