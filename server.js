@@ -1357,7 +1357,10 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
       announcement: `Game Started - Fight #${fightNumber}`
     });
 
-    
+    res.json({
+      message: "Game started",
+      game: result.rows[0]
+    });
     
     startDummyEngine(req.session.user.id);
   } catch (err) {

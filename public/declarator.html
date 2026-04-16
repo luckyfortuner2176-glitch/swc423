@@ -300,8 +300,14 @@ button:disabled {
                 return;
             }
             
-
-            
+            const message = `Game Started - Fight #${fightNumber}`;
+            await fetch('/api/declarator/set-header',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    message
+                })
+            });
             closeStartModal();
 
         } catch (err) {
