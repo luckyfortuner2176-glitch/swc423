@@ -81,7 +81,7 @@
                     </div>
                     <div class="video-container">
                         
-                        <iframe id="liveStream" src="" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen="true"></iframe>
+                        <iframe id="videoFrame" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen="true"></iframe>
                         <!--<iframe src="https://embed.api.video/live/li4wiTHdydMdEvcXddSAdd3d" allowfullscreen></iframe>-->
                     </div>
                     <marquee id="announcementBar" style="
@@ -366,6 +366,7 @@
 
                 lastStatus = data.status;
             }
+
         }catch(e){
             console.error(e);
         }
@@ -506,12 +507,14 @@
         }
     }
     // 📢 FETCH ACTIVE EVENT
+    let currentVideo = "";
+
     async function fetchEvent(){
         try{
             const res = await fetch('/api/active-event');
             const data = await res.json();
 
-            console.log("ACTIVE EVENT:", data); // 🔥 ADD THIS
+            console.log("ACTIVE EVENT:", data); // DEBUG
 
             document.getElementById('eventHeader').textContent =
                 data.event_name || "NO EVENT";
@@ -519,13 +522,16 @@
             document.getElementById('announcementBar').textContent =
                 data.announcement || "Welcome Players";
 
-            let currentStream = "";
-
-            if (data.stream_url && data.stream_url !== currentStream) {
-                document.getElementById('liveStream').src = data.stream_url;
-                currentStream = data.stream_url;
+            // ✅ FIXED VIDEO CONNECTION
+            if (data.video_url && data.video_url !== currentVideo) {
+                document.getElementById('videoFrame').src = data.video_url;
+                currentVideo = data.video_url;
             }
-
+            if (data.stream_enabled === false) {
+                document.getElementById('videoFrame').style.display = "none";
+            } else {
+                document.getElementById('videoFrame').style.display = "block";
+            }
         }catch(err){
             console.error(err);
         }
