@@ -199,6 +199,12 @@
     let payoutDraw = 0;
     let lastStatus = null;
     
+    let prevTotals = {
+        meron: 0,
+        wala: 0,
+        draw: 0,
+        balance: 0
+    };
     function formatNumber(num) {
         return Number(num || 0).toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -293,9 +299,12 @@
             const data = await res.json();
             game = data; // ✅ store latest game globally
             document.getElementById('fightNumber').textContent = data.fightNumber;
-            document.getElementById('totalMeron').textContent = formatNumber(data.totalMeron);
-            document.getElementById('totalWala').textContent = formatNumber(data.totalWala);
-            document.getElementById('totalDraw').textContent = formatNumber(data.totalDraw);
+            animateValue('totalMeron', prevTotals.meron, data.totalMeron);
+            prevTotals.meron = data.totalMeron;document.getElementById('totalMeron').textContent = formatNumber(data.totalMeron);
+            animateValue('totalWala', prevTotals.wala, data.totalWala);
+            prevTotals.wala = data.totalWala;
+            animateValue('totalDraw', prevTotals.draw, data.totalDraw);
+            prevTotals.draw = data.totalDraw;
 
             const totalPool =
                 data.totalMeron +
@@ -530,6 +539,32 @@
         }catch(e){
             console.error(e);
         }
+    }
+    function animateValue(elementId, start, end, duration = 500) {
+        const el = document.getElementById(elementId);
+
+        if (start === end) {
+            el.textContent = formatNumber(end);
+            return;
+        }
+
+        const range = end - start;
+        const increment = range / (duration / 16); // ~60fps
+        let current = start;
+
+        function update() {
+            current += increment;
+
+            if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                el.textContent = formatNumber(end);
+                return;
+            }
+
+            el.textContent = formatNumber(current);
+            requestAnimationFrame(update);
+        }
+
+        update();
     }
     setInterval(fetchGame, 3000);
     setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
