@@ -299,11 +299,19 @@ button:disabled {
                 showSnackbar(data.error || "Failed to start game");
                 return;
             }
+            let message = "";
+
+            if (side === "CANCELLED") {
+                message = "GAME CANCELLED - ALL BETS REFUNDED";
+            } else {
+                message = `${side} WINS!`;
+            }
+
             await fetch('/api/declarator/set-header',{
                 method:'POST',
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({
-                    message: `Fight #${fightNumber} is now OPEN`
+                    message
                 })
             });
             closeStartModal();
