@@ -136,29 +136,33 @@ const settleGame = async (gameId, winner) => {
 // HELPER FUNCTIONS (ADD HERE)
 // ==========================
 
-const upsertActiveEvent = async ({ gameId, event_name, announcement }) => {
+const upsertActiveEvent = async ({ gameId, event_name, announcement, video_url }) => {
   const check = await pool.query(`SELECT * FROM active_event WHERE id = 1`);
 
-  // ✅ Use existing event_name if not provided
-  if (!event_name && check.rows.length > 0) {
-    event_name = check.rows[0].event_name;
+  // Preserve existing values if not provided
+  if (check.rows.length > 0) {
+    const current = check.rows[0];
+
+    if (!event_name) event_name = current.event_name;
+    if (!announcement) announcement = current.announcement;
+    if (!video_url) video_url = current.video_url; // ✅ IMPORTANT
   }
 
   if (check.rows.length === 0) {
     await pool.query(`
-      INSERT INTO active_event (id, game_id, event_name, announcement)
-      VALUES (1, $1, $2, $3)
-    `, [gameId, event_name, announcement]);
+      INSERT INTO active_event (id, game_id, event_name, announcement, video_url)
+      VALUES (1, $1, $2, $3, $4)
+    `, [gameId, event_name, announcement, video_url]);
   } else {
     await pool.query(`
       UPDATE active_event
       SET game_id = $1,
           event_name = $2,
           announcement = $3,
+          video_url = $4,
           updated_at = NOW()
       WHERE id = 1
-    `, [gameId, event_name, announcement]);
-    
+    `, [gameId, event_name, announcement, video_url]);
   }
 };
 
@@ -1481,7 +1485,7 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
 app.get('/api/active-event', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT event_name, announcement
+      SELECT event_name, announcement, video_url
       FROM active_event
       WHERE id = 1
     `);
@@ -1568,6 +1572,31 @@ app.post('/api/declarator/toggle-stream', isAuthenticated, async (req, res) => {
     `, [enabled]);
 
     res.json({ message: "Stream updated" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
+// SET VIDEO URL API (DECLARATOR ONLY)
+// ==========================
+app.post('/api/declarator/set-video', isAuthenticated, async (req, res) => {
+  try {
+    if (req.session.user.role !== 'declarator') {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const { video_url } = req.body;
+
+    await pool.query(`
+      UPDATE active_event
+      SET video_url = $1,
+          updated_at = NOW()
+      WHERE id = 1
+    `, [video_url]);
+
+    res.json({ message: "Video updated" });
 
   } catch (err) {
     console.error(err);
