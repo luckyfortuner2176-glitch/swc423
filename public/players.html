@@ -224,7 +224,9 @@
                         <td>${p.parent_username || '-'}</td>
                         <td class="status ${p.status}">${p.status}</td>
                         <td class="actions">
-
+                            <button class="btn promote" onclick="promoteUser(${p.id})">
+                                ⬆️
+                            </button>
                             <button class="btn add ${!isDirect ? 'disabled' : ''}" 
                                 onclick="${isDirect ? `openModal(${p.id})` : ''}">
                                 ➕
@@ -351,6 +353,33 @@
                 console.error(err);
             }
         }
+        // =========================
+        // Promote user to agent
+        // =========================
+        async function promoteUser(userId) {
+        try {
+            const res = await fetch('/api/promote-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ userId })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                showSnackbar(data.error);
+                return;
+            }
+
+            showSnackbar(data.message, true);
+            loadPlayers();
+
+        } catch (err) {
+            console.error(err);
+            showSnackbar("Server error");
+        }
+    }
         // Call after session check
         checkSession();
         setInterval(loadWithdrawCount, 10000);

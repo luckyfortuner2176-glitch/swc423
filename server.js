@@ -1659,6 +1659,35 @@ app.get('/api/beads-history', async (req, res) => {
   }
 });
 // ==========================
+//  PROMOTE USER API
+// ==========================
+app.post('/api/promote-user', async (req, res) => {
+    const { userId } = req.body;
+
+    // 1. Get current logged-in user
+    const currentUser = req.user;
+
+    let newRole;
+
+    if (currentUser.role === 'admin') {
+        newRole = 'master_agent';
+    } else if (currentUser.role === 'master_agent') {
+        newRole = 'sub_agent';
+    } else if (currentUser.role === 'sub_agent') {
+        newRole = 'agent';
+    } else {
+        return res.status(403).json({ error: "Not allowed" });
+    }
+
+    // 2. Update target user
+    await db.query(
+        'UPDATE users SET role = ? WHERE id = ?',
+        [newRole, userId]
+    );
+
+    res.json({ message: "User promoted to " + newRole });
+});
+// ==========================
 // START SERVER
 // ==========================
 const PORT = process.env.PORT || 3000;
