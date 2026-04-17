@@ -1626,6 +1626,39 @@ app.get('/api/game-history', async (req, res) => {
     }
 });
 // ==========================
+// BEADS HISTORY WITH COUNT
+// ==========================
+app.get('/api/beads-history', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT winner
+      FROM games
+      WHERE winner IS NOT NULL
+      ORDER BY id ASC
+      LIMIT 200
+    `);
+
+    const history = result.rows.map(r => r.winner);
+
+    // ✅ COUNT SUMMARY
+    const counts = {
+      MERON: history.filter(x => x === 'MERON').length,
+      WALA: history.filter(x => x === 'WALA').length,
+      DRAW: history.filter(x => x === 'DRAW').length,
+      CANCELLED: history.filter(x => x === 'CANCELLED').length
+    };
+
+    res.json({
+      history,
+      counts
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch beads history" });
+  }
+});
+// ==========================
 // START SERVER
 // ==========================
 const PORT = process.env.PORT || 3000;
