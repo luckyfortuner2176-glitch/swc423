@@ -1661,31 +1661,60 @@ app.get('/api/beads-history', async (req, res) => {
 // ==========================
 //  PROMOTE USER API
 // ==========================
-app.post('/api/promote-user', async (req, res) => {
-    const { userId } = req.body;
+// ==========================
+//  PROMOTE USER API (FIXED)
+// ==========================
+app.post('/api/promote-user', isAuthenticated, async (req, res) => {
+  const { userId } = req.body;
+  const currentUser = req.session.user;
 
-    // 1. Get current logged-in user
-    const currentUser = req.user;
-
+  try {
     let newRole;
 
+    // 🔥 Determine new role based on current user
     if (currentUser.role === 'admin') {
-        newRole = 'master_agent';
+      newRole = 'master_agent';
     } else if (currentUser.role === 'master_agent') {
-        newRole = 'sub_agent';
+      newRole = 'sub_agent';
     } else if (currentUser.role === 'sub_agent') {
-        newRole = 'agent';
+      newRole = 'agent';
     } else {
-        return res.status(403).json({ error: "Not allowed" });
+      return res.status(403).json({ error: "Not allowed" });
     }
 
-    // 2. Update target user
-    await db.query(
-        'UPDATE users SET role = ? WHERE id = ?',
-        [newRole, userId]
+    // 🔒 Ensure target is a player
+    const userRes = await pool.query(
+      'SELECT role, parent_id FROM users WHERE id = $1',
+      [userId]
     );
 
-    res.json({ message: "User promoted to " + newRole });
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const target = userRes.rows[0];
+
+    if (target.role !== 'player') {
+      return res.status(400).json({ error: "Only players can be promoted" });
+    }
+
+    // 🔒 Ensure only direct downline
+    if (Number(target.parent_id) !== Number(currentUser.id)) {
+      return res.status(403).json({ error: "Not your player" });
+    }
+
+    // ✅ Update role
+    await pool.query(
+      'UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2',
+      [newRole, userId]
+    );
+
+    res.json({ message: `User promoted to ${newRole}` });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 // ==========================
 // START SERVER
