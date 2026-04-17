@@ -173,6 +173,13 @@
                 </div>
             </div>
         </div> <!-- game-layout -->
+        <div id="beadPlate" style="
+            display:grid;
+            grid-template-columns: repeat(30, 12px);
+            gap:4px;
+            justify-content:center;
+            margin-top:10px;
+        "></div> <!-- bead plate -->
         <!-- MODAL FOR WITHDRAWAL REQUEST-->
         <div id="withdrawModal" class="modal">
             <div class="modal-content">
@@ -581,6 +588,79 @@
 
         update();
     }
+    async function fetchHistory(){
+        try{
+            const res = await fetch('/api/game-history');
+            const data = await res.json();
+
+            renderBeadPlate(data);
+        }catch(err){
+            console.error(err);
+        }
+    }
+    function renderBeadPlate(history){
+        const container = document.getElementById('beadPlate');
+        container.innerHTML = '';
+
+        const MAX_ROWS = 6;
+
+        let columns = [];
+        let currentCol = [];
+        let lastWinner = null;
+
+        history.forEach(game => {
+            const winner = game.winner;
+
+            // 👉 NEW COLUMN if result changes OR column full
+            if (
+                winner !== lastWinner ||
+                currentCol.length >= MAX_ROWS
+            ){
+                if(currentCol.length){
+                    columns.push(currentCol);
+                }
+                currentCol = [];
+            }
+
+            currentCol.push(winner);
+            lastWinner = winner;
+        });
+
+        if(currentCol.length){
+            columns.push(currentCol);
+        }
+
+        // 🔥 RENDER GRID (column-based)
+        container.style.display = 'grid';
+        container.style.gridAutoFlow = 'column';
+        container.style.gridTemplateRows = `repeat(${MAX_ROWS}, 12px)`;
+        container.style.gap = '4px';
+
+        columns.forEach(col => {
+            for(let i=0; i<MAX_ROWS; i++){
+                const dot = document.createElement('div');
+
+                dot.style.width = '12px';
+                dot.style.height = '12px';
+                dot.style.borderRadius = '50%';
+
+                const result = col[i];
+
+                if(!result){
+                    dot.style.visibility = 'hidden';
+                } else {
+                    switch(result){
+                        case 'MERON': dot.style.background = 'red'; break;
+                        case 'WALA': dot.style.background = 'blue'; break;
+                        case 'DRAW': dot.style.background = 'green'; break;
+                        case 'CANCELLED': dot.style.background = 'gray'; break;
+                    }
+                }
+
+                container.appendChild(dot);
+            }
+        });
+    }
     setInterval(fetchGame, 3000);
     setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
     checkSession('player');   
@@ -590,6 +670,8 @@
     fetchEvent();
     setInterval(fetchActiveEvent, 3000);
     fetchActiveEvent();
+    setInterval(fetchHistory, 3000);
+    fetchHistory();
 </script>
 
 </body>

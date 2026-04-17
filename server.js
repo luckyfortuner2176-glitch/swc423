@@ -1604,6 +1604,28 @@ app.post('/api/declarator/set-video', isAuthenticated, async (req, res) => {
   }
 });
 // ==========================
+// GAME HISTORY API
+// ==========================
+
+app.get('/api/game-history', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT g.winner
+            FROM games g
+            JOIN active_event ae
+                ON g.event_name = ae.event_name
+            WHERE g.winner IS NOT NULL
+            ORDER BY g.id ASC
+            LIMIT 200
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch history" });
+    }
+});
+// ==========================
 // START SERVER
 // ==========================
 const PORT = process.env.PORT || 3000;
