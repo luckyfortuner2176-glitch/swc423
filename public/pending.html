@@ -193,13 +193,13 @@
                         <td>${user.username}</td>
                         <td>${new Date(user.created_at).toLocaleString()}</td>
                         <td>
-                            <select id="role-${user.id}">
+                            <select id="role-${user.id}" hidden>
                                 <option value="master_agent">Incorporator</option>
                                 <option value="sub_agent">Master Agent</option>
                                 <option value="agent">Gold Agent</option>
-                                <option value="player">Player</option>
+                                <option value="player" selected>Player</option>
                                 <option value="declarator">Declarator</option>
-                            </select>
+                            </select> Player
                         </td>
                         <td>
                             <button onclick="approveUser(${user.id})">Approve</button>
@@ -219,7 +219,7 @@
         // APPROVE USER
         // =========================
         async function approveUser(userId) {
-            const role = document.getElementById(`role-${userId}`).value;
+            const role = "player"; // always assign player
 
             try {
                 const res = await fetch('/api/approve-user', {
