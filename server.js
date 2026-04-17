@@ -1336,7 +1336,7 @@ app.post('/api/reject-withdrawal', isAuthenticated, async (req, res) => {
 //  START GAME (DECLARATOR ONLY)
 // ==========================
 app.post('/api/start-game', isAuthenticated, async (req, res) => {
-  const { fightNumber } = req.body;
+  const { fightNumber, event_name } = req.body;
 
   try {
     if (req.session.user.role !== 'declarator') {
@@ -1350,10 +1350,10 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
     `);
 
     const result = await pool.query(`
-      INSERT INTO games (fight_number, status)
-      VALUES ($1, 'OPEN')
+      INSERT INTO games (fight_number, status, event_name)
+      VALUES ($1, 'OPEN', $2)
       RETURNING *
-    `, [fightNumber]);
+    `, [fightNumber, event_name]);
 
     await upsertActiveEvent({
       gameId: result.rows[0].id,
