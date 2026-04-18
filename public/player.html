@@ -62,18 +62,19 @@
 }
 #beadPlate {
     display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: repeat(6, 14px);
+    grid-auto-flow: column; /* grows sideways */
+    grid-template-rows: repeat(6, 14px); /* max 6 rows */
 
     gap: 4px;
+    justify-content: start;
 
-    overflow-x: auto;   /* ✅ horizontal scroll */
+    overflow-x: auto;   /* ✅ scroll on mobile */
     overflow-y: hidden;
 
     padding: 6px;
     background: #0f172a;
     border-radius: 6px;
-    scroll-behavior: smooth;
+
     max-width: 100%;
 }
 .meron { background: red; }
@@ -210,7 +211,8 @@
                                 Win: <span id="winDraw">0</span>
                             </div>
                         </div>
-                        <div id="beadPlate"></div><!-- bead plate -->
+                        <div id="beadPlate"></div>
+                        <!-- bead plate -->
                         <!-- ✅ NEW TOTALS -->
                         <div id="totals" style="
                         margin-top:15px;
