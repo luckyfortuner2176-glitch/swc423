@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summary Report - Pitwarriors619</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Summary Report</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body class="dashboard-body">
 
-<!-- SIDEBAR (unchanged) -->
 <div class="sidebar" id="sidebar">
     <h2>Welcome, <span class="username">Agent</span></h2>
 
@@ -20,80 +18,81 @@
     <a href="withdrawal.html">💸 Withdrawals</a>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
-    <div class="header">
-        <div class="hamburger" onclick="toggleSidebar()">☰</div>
+<div class="header">
+    <div class="hamburger" onclick="toggleSidebar()">☰</div>
+</div>
+
+<div class="content">
+
+<h2>Financial Summary</h2>
+
+<!-- FILTER -->
+<div class="filters">
+    <select id="range">
+        <option value="all">All Time</option>
+        <option value="day">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+    </select>
+
+    <button onclick="loadSummary()">Apply</button>
+</div>
+
+<!-- CARDS -->
+<div class="cards-container">
+
+    <div class="card">
+        <h3>Commission Earned</h3>
+        <p id="commission">0.00</p>
     </div>
 
-    <div class="content">
-
-        <h2>Commission Summary</h2>
-
-        <!-- FILTER -->
-        <div class="filters">
-            <select id="range" onchange="loadSummary()">
-                <option value="all">All Time</option>
-                <option value="day">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-            </select>
-        </div>
-
-        <!-- CARDS -->
-        <div class="cards-container">
-
-            <div class="card">
-                <h3>Total Commission</h3>
-                <p id="totalCommission">0.00</p>
-            </div>
-
-            <div class="card">
-                <h3>Total Base Amount</h3>
-                <p id="totalBase">0.00</p>
-            </div>
-
-            <div class="card">
-                <h3>Total Transactions</h3>
-                <p id="totalTx">0</p>
-            </div>
-
-        </div>
-
+    <div class="card">
+        <h3>Withdrawals (Approved)</h3>
+        <p id="withdrawals">0.00</p>
     </div>
+
+    <div class="card">
+        <h3>Game Points Used</h3>
+        <p id="bets">0.00</p>
+    </div>
+
+    <div class="card">
+        <h3>Net Earnings</h3>
+        <p id="net">0.00</p>
+    </div>
+
+</div>
+
+</div>
 
 </div>
 
 <script>
 
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-}
-
 async function loadSummary() {
     const range = document.getElementById('range').value;
 
-    const res = await fetch(`/api/commission-summary?range=${range}`, {
+    const res = await fetch(`/api/summary?range=${range}`, {
         credentials: 'include'
     });
 
-    if (res.status === 401) {
-        window.location.href = '/';
-        return;
-    }
+    if (!res.ok) return;
 
     const data = await res.json();
 
-    document.getElementById('totalCommission').textContent =
-        Number(data.total_commission || 0).toFixed(2);
+    document.getElementById('commission').innerText = Number(data.commission).toFixed(2);
+    document.getElementById('withdrawals').innerText = Number(data.withdrawals).toFixed(2);
+    document.getElementById('bets').innerText = Number(data.bets).toFixed(2);
 
-    document.getElementById('totalBase').textContent =
-        Number(data.total_base || 0).toFixed(2);
+    document.getElementById('net').innerText =
+        (data.commission - data.withdrawals - data.bets).toFixed(2);
+}
 
-    document.getElementById('totalTx').textContent =
-        data.total_transactions || 0;
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
 loadSummary();
