@@ -1644,16 +1644,17 @@ app.get('/api/game-history', async (req, res) => {
 app.get('/api/beads-history', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT winner
-      FROM games
-      WHERE winner IS NOT NULL
-      ORDER BY id ASC
+      SELECT g.winner
+      FROM games g
+      JOIN active_event ae
+        ON g.event_name = ae.event_name
+      WHERE g.winner IS NOT NULL
+      ORDER BY g.id ASC
       LIMIT 200
     `);
 
     const history = result.rows.map(r => r.winner);
 
-    // ✅ COUNT SUMMARY
     const counts = {
       MERON: history.filter(x => x === 'MERON').length,
       WALA: history.filter(x => x === 'WALA').length,
