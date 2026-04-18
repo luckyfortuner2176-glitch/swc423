@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SWC888</title>
+    <title>Dashboard - Pitwarriors619</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -133,7 +133,7 @@
 
         <!-- FOOTER -->
         <footer>
-            © 2024 SWC888. All rights reserved.
+            © 2024 Pitwarriors619. All rights reserved.
         </footer>
 
     </div>
@@ -326,29 +326,6 @@
                 console.error(err);
             }
         }
-        document.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-        });
-        document.addEventListener('keydown', function (e) {
-            if (
-                e.key === "F12" ||
-                (e.ctrlKey && e.shiftKey && e.key === "I") ||
-                (e.ctrlKey && e.shiftKey && e.key === "J") ||
-                (e.ctrlKey && e.key === "U")
-            ) {
-                e.preventDefault();
-            }
-        });
-        setInterval(() => {
-            const threshold = 160;
-            if (
-                window.outerWidth - window.innerWidth > threshold ||
-                window.outerHeight - window.innerHeight > threshold
-            ) {
-                // optional: logout or redirect
-                window.location.href = "/api/logout";
-            }
-        }, 1000);
         // Call after session check
         checkSession();
         loadDashboardWallets();
