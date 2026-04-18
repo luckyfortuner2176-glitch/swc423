@@ -60,7 +60,25 @@
   line-height: 30px;
   font-size: 12px;
 }
+#beadPlate {
+    display: grid;
+    grid-auto-flow: column; /* columns grow horizontally */
+    grid-template-rows: repeat(6, 14px); /* 6 rows */
+    gap: 4px;
 
+    justify-content: start; /* align left */
+    align-content: start;
+
+    max-width: 100%;
+    overflow-x: auto;   /* ✅ horizontal scroll */
+    overflow-y: hidden;
+
+    padding: 6px;
+    background: #0f172a;
+    border-radius: 6px;
+
+    box-sizing: border-box;
+}
 .meron { background: red; }
 .wala { background: blue; }
 .draw { background: green; }
@@ -688,8 +706,8 @@
             for(let i=0; i<MAX_ROWS; i++){
                 const dot = document.createElement('div');
 
-                dot.style.width = '14px';
-                dot.style.height = '14px';
+                dot.style.width = '12px';
+                dot.style.height = '12px';
                 dot.style.borderRadius = '50%';
                 dot.style.border = '2px solid transparent';
                 dot.style.background = 'transparent';

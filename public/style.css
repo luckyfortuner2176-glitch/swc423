@@ -648,3 +648,10 @@ button:active {
         padding: 0 10px; /* prevents text from touching edges */
     }
 }
+
+@media (max-width: 768px) {
+    #beadPlate {
+        grid-template-rows: repeat(6, 12px);
+        gap: 3px;
+    }
+}
