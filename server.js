@@ -1730,18 +1730,69 @@ app.post('/api/promote-user', isAuthenticated, async (req, res) => {
   }
 });
 // ==========================
-// MY COMMISSION TRANSACTIONS API
+// COMMISSION TRANSACTIONS API (SEARCHABLE)
 // ==========================
 app.get('/api/my-commission-transactions', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user.id;
 
-    const result = await pool.query(`
-      SELECT id, amount, description, created_at
-      FROM commission_transactions
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-    `, [userId]);
+    const {
+      search = '',
+      from,
+      to,
+      limit = 50
+    } = req.query;
+
+    let query = `
+      SELECT 
+        ct.id,
+        ct.amount,
+        ct.rate,
+        ct.level,
+        ct.base_amount,
+        ct.created_at,
+        u.username AS source_username,
+        g.fight_number AS game_fight
+      FROM commission_transactions ct
+      LEFT JOIN users u ON u.id = ct.source_user_id
+      LEFT JOIN games g ON g.id = ct.game_id
+      WHERE ct.user_id = $1
+    `;
+
+    const params = [userId];
+    let i = 2;
+
+    // 🔍 SEARCH (username or game fight number)
+    if (search) {
+      query += ` AND (
+        u.username ILIKE $${i} 
+        OR CAST(g.fight_number AS TEXT) ILIKE $${i}
+      )`;
+      params.push(`%${search}%`);
+      i++;
+    }
+
+    // 📅 DATE FILTERS
+    if (from) {
+      query += ` AND ct.created_at >= $${i}`;
+      params.push(from);
+      i++;
+    }
+
+    if (to) {
+      query += ` AND ct.created_at <= $${i}`;
+      params.push(to);
+      i++;
+    }
+
+    query += `
+      ORDER BY ct.created_at DESC
+      LIMIT $${i}
+    `;
+
+    params.push(limit);
+
+    const result = await pool.query(query, params);
 
     res.json(result.rows);
 

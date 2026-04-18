@@ -43,17 +43,24 @@
         </div>
 
         <div class="content">
-            <h2>Wallet Logs</h2>
-
+            <h2>Commission Logs</h2>
+            <div class="filters">
+                <input type="text" id="search" placeholder="Search username / fight #">
+                <input type="date" id="from">
+                <input type="date" id="to">
+                <button onclick="loadCommissionLogs()">Search</button>
+            </div>
             <div class="table-wrapper">
                 <table class="styled-table" id="walletTable">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Source</th>
-                            <th>Amount</th>
-                            <th>Notes</th>
-                            <th>Description</th>
+                            <th>Source User</th>
+                            <th>Base Amount</th>
+                            <th>Rate (%)</th>
+                            <th>Commission Amount</th>
+                            <th>Level</th>
+                            <th>Game (Fight #)</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -150,38 +157,51 @@
             }
         }
         async function loadCommissionLogs() {
-        try {
-            const res = await fetch('/api/my-commission-transactions', {
-                credentials: 'include'
-            });
+            try {
+                const search = document.getElementById('search')?.value || '';
+                const from = document.getElementById('from')?.value || '';
+                const to = document.getElementById('to')?.value || '';
 
-            if (res.status === 401) {
-                window.location.href = '/';
-                return;
+                const params = new URLSearchParams({
+                    search,
+                    from,
+                    to,
+                    limit: 100
+                });
+
+                const res = await fetch(`/api/my-commission-transactions?${params}`, {
+                    credentials: 'include'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await res.json();
+                const tbody = document.querySelector('#walletTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(tx => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${new Date(tx.created_at).toLocaleString()}</td>
+                        <td>${tx.source_username || 'SYSTEM'}</td>
+                        <td>${tx.amount}</td>
+                        <td>${tx.rate}%</td>
+                        <td>Level ${tx.level}</td>
+                        <td>Fight #${tx.game_fight || '-'}</td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error(err);
             }
-
-            const data = await res.json();
-            const tbody = document.querySelector('#walletTable tbody');
-            tbody.innerHTML = '';
-
-            data.forEach(tx => {
-                const row = document.createElement('tr');
-
-                row.innerHTML = `
-                    <td>${new Date(tx.created_at).toLocaleString()}</td>
-                    <td>+ Commission</td>
-                    <td>${tx.amount}</td>
-                    <td>-</td>
-                    <td>${tx.description}</td>
-                `;
-
-                tbody.appendChild(row);
-            });
-
-        } catch (err) {
-            console.error(err);
         }
-    }
+    
         checkSession();
         loadCommissionLogs();
         setInterval(loadWithdrawCount, 10000);
