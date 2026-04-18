@@ -186,15 +186,13 @@
                     const row = document.createElement('tr');
 
                     row.innerHTML = `
-                        row.innerHTML = `
-                            <td>${new Date(tx.created_at).toLocaleString()}</td>
-                            <td>${tx.source_username || '-'}</td>
-                            <td>${Number(tx.base_amount || 0).toFixed(2)}</td>
-                            <td>${Number(tx.rate || 0).toFixed(2)}%</td>
-                            <td>${Number(tx.amount || 0).toFixed(2)}</td>
-                            <td>Level ${tx.level ?? '-'}</td>
-                            <td>Fight #${tx.game_fight ?? '-'}</td>
-                        `;
+                        <td>${new Date(tx.created_at).toLocaleString()}</td>
+                        <td>${tx.source_username || '-'}</td>
+                        <td>${Number(tx.base_amount || 0).toFixed(2)}</td>
+                        <td>${Number(tx.rate || 0).toFixed(2)}%</td>
+                        <td>${Number(tx.amount || 0).toFixed(2)}</td>
+                        <td>Level ${tx.level ?? '-'}</td>
+                        <td>Fight #${tx.game_fight ?? '-'}</td>
                     `;
 
                     tbody.appendChild(row);
