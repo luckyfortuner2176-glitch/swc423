@@ -1730,6 +1730,27 @@ app.post('/api/promote-user', isAuthenticated, async (req, res) => {
   }
 });
 // ==========================
+// MY COMMISSION TRANSACTIONS API
+// ==========================
+app.get('/api/my-commission-transactions', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const result = await pool.query(`
+      SELECT id, amount, description, created_at
+      FROM commission_transactions
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// ==========================
 // START SERVER
 // ==========================
 const PORT = process.env.PORT || 3000;
