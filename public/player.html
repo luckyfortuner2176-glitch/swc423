@@ -468,16 +468,16 @@
 
                 if (gameStatus !== 'OPEN') {
                     disableBetting("Betting is " + gameStatus);
+                    if (gameStatus === 'RESOLVED') {
+                        fetchHistory();
+                        loadBeads();
+                    }
                 } else {
                     document.querySelectorAll('.bet-btn').forEach(btn=>{
                         btn.disabled = false;
                         btn.style.opacity = 1;
                     });
-                    if (gameStatus !== 'RESOLVED') {
-                        checkPlayerBalance();
-                        fetchHistory();
-                        loadBeads();
-                    }
+                    
                     
                 }
                 lastStatus = data.status;
