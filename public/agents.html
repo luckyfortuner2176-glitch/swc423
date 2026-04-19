@@ -440,8 +440,8 @@
                                 
                             </select>
                         </td>
-                        <td>${formatPHP(a.points)}</td>
-                        <td>${formatPHP(a.commission_earnings || 0)}</td>
+                        <td class="wallet-yellow">${formatPHP(a.points)}</td><td>${formatPHP(a.points)}</td>
+                        <td class="earnings-green">${formatPHP(a.commission_earnings || 0)}</td>
                         <td>
                             CURRENT: ${a.commission_rate || 0}%<br>
                             <input type="number" min="0" max="100"
