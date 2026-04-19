@@ -567,7 +567,7 @@ button:active {
     width: auto;
     min-width: 140px;   /* 🔥 bigger */
     max-width: 180px;
-    padding: 10px 12px; /* 🔥 taller */
+    padding: 12px 14px; /* 🔥 taller */
     font-size: 14px;    /* 🔥 clearer text */
     border-radius: 6px;
     background: #0f172a;
