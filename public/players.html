@@ -85,6 +85,14 @@
                 <button onclick="closeModal()">❌ Cancel</button>
             </div>
         </div>
+        <div id="confirmModal" class="modal">
+            <div class="modal-content">
+                <h3 id="confirmTitle">Confirm Action</h3>
+                <p id="confirmMessage"></p>
+                <button onclick="confirmAction()">✅ Confirm</button>
+                <button onclick="closeConfirmModal()">❌ Cancel</button>
+            </div>
+        </div>
         <footer>
             © 2024 SWC888. All rights reserved.
         </footer>
@@ -280,7 +288,17 @@
         // Reset password
         // =========================
         async function resetPassword(userId) {
-            if (!confirm("Reset password to 123456?")) return;
+            openConfirmModal("Reset password to 123456?", async () => {
+                const res = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId })
+                });
+
+                const data = await res.json();
+                showSnackbar(data.message);
+            });
 
             const res = await fetch('/api/reset-password', {
                 method: 'POST',
@@ -402,7 +420,10 @@
 
             case 'activate':
             case 'suspend':
-                toggleStatus(userId, status);
+                openConfirmModal(
+                    action === 'activate' ? "Activate this user?" : "Suspend this user?",
+                    () => toggleStatus(userId, status)
+                );
                 break;
 
             case 'reset':
@@ -412,6 +433,23 @@
 
         // ✅ Reset dropdown (same behavior as agents but safer)
         selectEl.value = "";
+    }
+    let confirmCallback = null;
+
+    function openConfirmModal(message, callback) {
+        document.getElementById('confirmMessage').textContent = message;
+        confirmCallback = callback;
+        document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+        confirmCallback = null;
+    }
+
+    function confirmAction() {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
     }
         // Call after session check
         checkSession();
