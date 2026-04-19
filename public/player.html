@@ -869,10 +869,7 @@
             btn.disabled = true;
         }
     }
-    socket.on("gameUpdate", data => {
-        updateUI(data);
-    });
-setInterval(fetchGame, 3000);
+    setInterval(fetchGame, 3000);
     setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
     checkSession('player');   
     fetchGame();
