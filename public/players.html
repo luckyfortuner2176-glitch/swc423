@@ -34,7 +34,7 @@
         <a href="change-password.html">🔑 Change Password</a>
         <a href="/api/logout">🚪 Logout</a>
     </div>
-
+    <div id="overlay" class="overlay"></div>
     <!-- MAIN -->
     <div class="main">
 
@@ -93,6 +93,14 @@
                 <button onclick="closeConfirmModal()">❌ Cancel</button>
             </div>
         </div>
+        <div id="withdrawModal" class="modal">
+            <div class="modal-content">
+                <h3>Withdraw Points</h3>
+                <input type="number" id="withdrawInput" placeholder="Enter amount" style="width:100%; padding:12px;">
+                <button onclick="confirmWithdraw()">💸 Confirm</button>
+                <button onclick="closeWithdrawModal()">❌ Cancel</button>
+            </div>
+        </div>
         <footer>
             © 2024 SWC888. All rights reserved.
         </footer>
@@ -100,6 +108,7 @@
     </div>
 
     <script>
+        
         function formatNumber(amount) {
             return new Intl.NumberFormat('en-PH', {
                 minimumFractionDigits: 2,
@@ -134,10 +143,7 @@
             loadWithdrawCount();
         }
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-        }
+        
         // =========================
         // Hamburger & overlay
         // =========================
@@ -244,6 +250,7 @@
                                 <option value="">⚙️ Select Action</option>
                                 <option value="promote">⬆️ Set at Agent</option>
                                 <option value="add" ${!isDirect ? 'disabled' : ''}>➕ Load</option>
+                                <option value="withdraw" ${!isDirect ? 'disabled' : ''}>💸 Withdraw</option>
                                 <option value="${p.status === 'suspended' ? 'activate' : 'suspend'}">
                                     ${p.status === 'suspended' ? '✅ Activate' : '⛔ Suspend'}
                                 </option>
@@ -300,15 +307,7 @@
                 showSnackbar(data.message);
             });
 
-            const res = await fetch('/api/reset-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ userId })
-            });
-
-            const data = await res.json();
-
+            const data = await res.json(); // ❌ res is undefined here
             showSnackbar(data.message);
         }
         // =========================
@@ -417,7 +416,9 @@
             case 'add':
                 if (isDirect) openModal(userId);
                 break;
-
+            case 'withdraw':
+                if (isDirect) openWithdrawModal(userId);
+                break;
             case 'activate':
             case 'suspend':
                 openConfirmModal(
@@ -450,6 +451,48 @@
     function confirmAction() {
         if (confirmCallback) confirmCallback();
         closeConfirmModal();
+    }
+    let withdrawUserId = null;
+
+    function openWithdrawModal(userId) {
+        withdrawUserId = userId;
+        document.getElementById('withdrawModal').style.display = 'flex';
+    }
+
+    function closeWithdrawModal() {
+        document.getElementById('withdrawModal').style.display = 'none';
+    }
+
+    async function confirmWithdraw() {
+        const amount = document.getElementById('withdrawInput').value;
+
+        if (!amount || amount <= 0) {
+            showSnackbar("Invalid amount");
+            return;
+        }
+
+        openConfirmModal(`Withdraw ${amount} points from player?`, async () => {
+            const res = await fetch('/api/withdraw-points-player', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: withdrawUserId,
+                    amount: Number(amount)
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                showSnackbar(data.error);
+                return;
+            }
+
+            showSnackbar(data.message, true);
+            closeWithdrawModal();
+            loadPlayers();
+        });
     }
         // Call after session check
         checkSession();
