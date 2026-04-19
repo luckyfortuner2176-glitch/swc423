@@ -669,31 +669,8 @@
             console.error(e);
         }
     }
-    function animateValue(elementId, start, end, duration = 1000) {
-        const el = document.getElementById(elementId);
-
-        if (start === end) {
-            el.textContent = formatNumber(end);
-            return;
-        }
-
-        const range = end - start;
-        const increment = range / (duration / 16); // ~60fps
-        let current = start;
-
-        function update() {
-            current += increment;
-
-            if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-                el.textContent = formatNumber(end);
-                return;
-            }
-
-            el.textContent = formatNumber(current);
-            requestAnimationFrame(update);
-        }
-
-        update();
+    function animateValue(id, start, end) {
+        document.getElementById(id).textContent = formatNumber(end);
     }
     async function fetchHistory(){
         try{
@@ -869,7 +846,7 @@
             btn.disabled = true;
         }
     }
-    setInterval(fetchGame, 3000);
+    setInterval(fetchGame, 1000);
     setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
     checkSession('player');   
     fetchGame();
@@ -879,10 +856,10 @@
     setInterval(fetchActiveEvent, 3000);
     fetchActiveEvent();
     
-    setInterval(() => {
+    if (lastStatus !== game.status && game.status === "RESOLVED") {
         fetchHistory();
         loadBeads();
-    }, 3000);
+    }
     
 </script>
 
