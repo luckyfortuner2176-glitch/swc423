@@ -230,23 +230,18 @@
                     row.innerHTML = `
                         <td>${p.username}</td>
                         <td class="actions">
-                            <button class="btn promote" onclick="promoteUser(${p.id})">
-                                ⬆️
-                            </button>
-                            <button class="btn add ${!isDirect ? 'disabled' : ''}" 
-                                onclick="${isDirect ? `openModal(${p.id})` : ''}">
-                                ➕
-                            </button>
+                            <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
+                                onchange="handlePlayerAction(this, this.value, ${p.id}, '${p.status}', ${isDirect})">
 
-                            <button class="btn ${p.status === 'suspended' ? 'activate' : 'suspend'}"
-                                onclick="toggleStatus(${p.id}, '${p.status}')">
-                                ${p.status === 'suspended' ? '✅' : '⛔'}
-                            </button>
+                                <option value="">⚙️ Select Action</option>
+                                <option value="promote">⬆️ Promote</option>
+                                <option value="add" ${!isDirect ? 'disabled' : ''}>➕ Add Points</option>
+                                <option value="${p.status === 'suspended' ? 'activate' : 'suspend'}">
+                                    ${p.status === 'suspended' ? '✅ Activate' : '⛔ Suspend'}
+                                </option>
+                                <option value="reset">🔑 Reset Password</option>
 
-                            <button class="btn reset" onclick="resetPassword(${p.id})">
-                                🔑
-                            </button>
-
+                            </select>
                         </td>
                         <td>${formatNumber(p.points)}</td>
                         <td class="status ${p.status}">${p.status}</td>
@@ -392,6 +387,31 @@
             console.error(err);
             showSnackbar("Server error");
         }
+    }
+    function handlePlayerAction(selectEl, action, userId, status, isDirect) {
+        if (!action) return;
+
+        switch(action) {
+            case 'promote':
+                promoteUser(userId);
+                break;
+
+            case 'add':
+                if (isDirect) openModal(userId);
+                break;
+
+            case 'activate':
+            case 'suspend':
+                toggleStatus(userId, status);
+                break;
+
+            case 'reset':
+                resetPassword(userId);
+                break;
+        }
+
+        // ✅ Reset dropdown (same behavior as agents but safer)
+        selectEl.value = "";
     }
         // Call after session check
         checkSession();
