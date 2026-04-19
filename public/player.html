@@ -390,7 +390,6 @@
             closeBetModal();
 
             // refresh UI
-            fetchGame();
             checkPlayerBalance();
 
         } catch (err) {
@@ -474,9 +473,15 @@
                         btn.disabled = false;
                         btn.style.opacity = 1;
                     });
+                    if (gameStatus !== 'RESOLVED') {
+                        checkPlayerBalance();
+                        fetchHistory();
+                        loadBeads();
+                    }
+                    
                 }
-
                 lastStatus = data.status;
+                fetchEvent();
             }
 
         }catch(e){
@@ -847,19 +852,11 @@
         }
     }
     setInterval(fetchGame, 1000);
-    setInterval(checkPlayerBalance, 3000); // ✅ auto refresh balance
     checkSession('player');   
     fetchGame();
     checkPlayerBalance(); // ✅ initial load
-    setInterval(fetchEvent, 3000);
-    fetchEvent();
     setInterval(fetchActiveEvent, 3000);
     fetchActiveEvent();
-    
-    if (lastStatus !== game.status && game.status === "RESOLVED") {
-        fetchHistory();
-        loadBeads();
-    }
     
 </script>
 
