@@ -759,7 +759,7 @@ button:disabled {
         pendingBet.amount = amount;
 
         document.getElementById('betConfirmText').innerText =
-            `You are betting ₱${amount.toLocaleString()} on ${side === 'MERON' ? '🔴 MERON' : '🔵 WALA'}`;
+            `You are betting ₱${amount.toLocaleString()} on ${side === 'MERON' ? ' MERON' : ' WALA'}`;
 
         document.getElementById('betConfirmModal').style.display = 'flex';
     }
