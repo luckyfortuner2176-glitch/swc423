@@ -780,16 +780,25 @@ button:disabled {
     async function loadFast() {
         await loadBets();
     }
+    async function realtimeLoop() {
+        await fetchGame();
+        await fetchEvent();
 
+        // ✅ Only load bets if OPEN (prevents useless spam)
+        if (game.status === 'OPEN') {
+            await loadBets();
+        }
+
+        requestAnimationFrame(realtimeLoop); // ⚡ ultra-fast loop
+    }
+
+    // 🚀 START REALTIME
+    realtimeLoop();
     // initial
     loadCore();
     loadFast();
 
-    // slower updates
-    setInterval(loadCore, 5000);
-
-    // faster updates for bets
-    setInterval(loadFast, 2000);
+    
    
 
 </script>
