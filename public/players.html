@@ -250,7 +250,11 @@
                         </td>
                         <td>${formatNumber(p.points)}</td>
                         <td class="status ${p.status}">${p.status}</td>
-                        <td>${p.created_at}</td>
+                        <td>${new Date(p.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                        })}</td>
                     `;
 
                     table.appendChild(row);
