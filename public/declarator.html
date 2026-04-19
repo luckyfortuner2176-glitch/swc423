@@ -247,10 +247,24 @@ button:disabled {
         <button onclick="closeVideoModal()">Cancel</button>
     </div>
 </div>
+<!-- BET CONFIRM MODAL -->
+<div id="betConfirmModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Bet</h3>
+
+        <p id="betConfirmText" style="margin:10px 0; font-size:16px;"></p>
+
+        <button onclick="confirmBet()">Confirm</button>
+        <button onclick="closeBetModal()">Cancel</button>
+    </div>
+</div>
 <script>
     let game = {};
     let userId = null;
-
+    let pendingBet = {
+        side: null,
+        amount: 0
+    };
     function formatNumber(num) {
         return Number(num || 0).toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -494,27 +508,52 @@ button:disabled {
         }
     }
 
-    async function placeBet(side){
+    function placeBet(side){
         const amount = Number(document.getElementById('betAmount').value);
+
         if (game.status !== 'OPEN') {
             return showSnackbar("Betting is closed", "warning");
         }
+
         if(!amount || amount <= 0){
-            showSnackbar("Enter valid amount");
-            return;
+            return showSnackbar("Enter valid amount");
         }
 
-        await fetch('/api/place-bet',{
-            method:'POST',
-            credentials:'include',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                side: side.toUpperCase(),
-                amount
-            })
-        });
+        // ✅ OPEN CONFIRM MODAL INSTEAD
+        openBetModal(side.toUpperCase(), amount);
+    }
+    async function confirmBet(){
+        try{
+            const res = await fetch('/api/place-bet',{
+                method:'POST',
+                credentials:'include',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    side: pendingBet.side,
+                    amount: pendingBet.amount
+                })
+            });
 
-        document.getElementById('betAmount').value = '';
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Bet failed");
+            }
+
+            showSnackbar("Bet placed!");
+
+            document.getElementById('betAmount').value = '';
+            closeBetModal();
+
+            // refresh
+            fetchGame();
+            fetchBalance();
+            loadBets();
+
+        }catch(err){
+            console.error(err);
+            showSnackbar(err.message, "error");
+        }
     }
     async function fetchBalance(){
     try{
@@ -715,7 +754,19 @@ button:disabled {
             btn.style.pointerEvents = "none";
         }
     }
-        
+    function openBetModal(side, amount){
+        pendingBet.side = side;
+        pendingBet.amount = amount;
+
+        document.getElementById('betConfirmText').innerText =
+            `You are betting ₱${amount.toLocaleString()} on ${side === 'MERON' ? '🔴 MERON' : '🔵 WALA'}`;
+
+        document.getElementById('betConfirmModal').style.display = 'flex';
+    }
+
+    function closeBetModal(){
+        document.getElementById('betConfirmModal').style.display = 'none';
+    }
         
     checkSession('declarator');
 
