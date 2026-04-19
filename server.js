@@ -636,7 +636,7 @@ app.get('/api/players', isAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
 
     const result = await pool.query(`
-      SELECT u.id, u.username, u.points, u.status, u.role, u.parent_id,
+      SELECT u.id, u.username, u.points, u.status, u.role, u.parent_id, u.created_at,
              p.username AS parent_username
       FROM users u
       LEFT JOIN users p ON u.parent_id = p.id

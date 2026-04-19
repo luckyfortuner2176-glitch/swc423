@@ -64,10 +64,10 @@
                         <thead>
                             <tr>
                                 <th>Username</th>
-                                <th>Points</th>
-                                <th>Agent</th>
-                                <th>Status</th>
                                 <th>Actions</th>
+                                <th>Wallet</th>
+                                <th>Status</th>
+                                <th>Registration</th>
                             </tr>
                         </thead>
                         <tbody id="playersTable"></tbody>
@@ -229,9 +229,6 @@
                     console.log("Player parent:", p.parent_id, "Current user:", currentUserId);
                     row.innerHTML = `
                         <td>${p.username}</td>
-                        <td>${formatNumber(p.points)}</td><td>${p.points}</td>
-                        <td>${p.parent_username || '-'}</td>
-                        <td class="status ${p.status}">${p.status}</td>
                         <td class="actions">
                             <button class="btn promote" onclick="promoteUser(${p.id})">
                                 ⬆️
@@ -251,6 +248,9 @@
                             </button>
 
                         </td>
+                        <td>${formatNumber(p.points)}</td>
+                        <td class="status ${p.status}">${p.status}</td>
+                        <td>${p.created_at}</td>
                     `;
 
                     table.appendChild(row);
