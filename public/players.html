@@ -382,118 +382,122 @@
         // Promote user to agent
         // =========================
         async function promoteUser(userId) {
-        try {
-            const res = await fetch('/api/promote-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ userId })
-            });
+            try {
+                const res = await fetch('/api/promote-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId })
+                });
 
-            const data = await res.json();
+                const data = await res.json();
 
-            if (!res.ok) {
-                showSnackbar(data.error);
+                if (!res.ok) {
+                    showSnackbar(data.error);
+                    return;
+                }
+
+                showSnackbar(data.message, true);
+                loadPlayers();
+
+            } catch (err) {
+                console.error(err);
+                showSnackbar("Server error");
+            }
+        }
+        function handlePlayerAction(selectEl, action, userId, status, isDirect) {
+            if (!action) return;
+
+            switch(action) {
+                case 'promote':
+                    promoteUser(userId);
+                    break;
+
+                case 'add':
+                    if (isDirect) openModal(userId);
+                    break;
+                case 'withdraw':
+                    if (isDirect) openWithdrawModal(userId);
+                    break;
+                case 'activate':
+                case 'suspend':
+                    openConfirmModal(
+                        action === 'activate' ? "Activate this user?" : "Suspend this user?",
+                        () => toggleStatus(userId, status)
+                    );
+                    break;
+
+                case 'reset':
+                    resetPassword(userId);
+                    break;
+            }
+
+            // ✅ Reset dropdown (same behavior as agents but safer)
+            selectEl.value = "";
+        }
+        let confirmCallback = null;
+
+        function openConfirmModal(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        async function confirmAction() {
+            if (confirmCallback) {
+                await confirmCallback(); // ✅ wait for API
+            }
+            closeConfirmModal();
+        }
+        let withdrawUserId = null;
+
+        function openWithdrawModal(userId) {
+            withdrawUserId = userId;
+            document.getElementById('withdrawModal').style.display = 'flex';
+        }
+
+        function closeWithdrawModal() {
+            document.getElementById('withdrawModal').style.display = 'none';
+            document.getElementById('withdrawInput').value = ''; // ✅ reset
+        }
+
+        async function confirmWithdraw() {
+            const amount = document.getElementById('withdrawInput').value;
+
+            if (!amount || amount <= 0) {
+                showSnackbar("Invalid amount");
                 return;
             }
 
-            showSnackbar(data.message, true);
-            loadPlayers();
+            closeWithdrawModal(); // ✅ fix overlap
 
-        } catch (err) {
-            console.error(err);
-            showSnackbar("Server error");
-        }
-    }
-    function handlePlayerAction(selectEl, action, userId, status, isDirect) {
-        if (!action) return;
+            openConfirmModal(`Withdraw ${amount} points from player?`, async () => {
+                const res = await fetch('/api/withdraw-points-player', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId: withdrawUserId,
+                        amount: Number(amount)
+                    })
+                });
 
-        switch(action) {
-            case 'promote':
-                promoteUser(userId);
-                break;
+                const data = await res.json();
 
-            case 'add':
-                if (isDirect) openModal(userId);
-                break;
-            case 'withdraw':
-                if (isDirect) openWithdrawModal(userId);
-                break;
-            case 'activate':
-            case 'suspend':
-                openConfirmModal(
-                    action === 'activate' ? "Activate this user?" : "Suspend this user?",
-                    () => toggleStatus(userId, status)
-                );
-                break;
+                if (!res.ok) {
+                    showSnackbar(data.error);
+                    return;
+                }
 
-            case 'reset':
-                resetPassword(userId);
-                break;
-        }
-
-        // ✅ Reset dropdown (same behavior as agents but safer)
-        selectEl.value = "";
-    }
-    let confirmCallback = null;
-
-    function openConfirmModal(message, callback) {
-        document.getElementById('confirmMessage').textContent = message;
-        confirmCallback = callback;
-        document.getElementById('confirmModal').style.display = 'flex';
-    }
-
-    function closeConfirmModal() {
-        document.getElementById('confirmModal').style.display = 'none';
-        confirmCallback = null;
-    }
-
-    function confirmAction() {
-        if (confirmCallback) confirmCallback();
-        closeConfirmModal();
-    }
-    let withdrawUserId = null;
-
-    function openWithdrawModal(userId) {
-        withdrawUserId = userId;
-        document.getElementById('withdrawModal').style.display = 'flex';
-    }
-
-    function closeWithdrawModal() {
-        document.getElementById('withdrawModal').style.display = 'none';
-    }
-
-    async function confirmWithdraw() {
-        const amount = document.getElementById('withdrawInput').value;
-
-        if (!amount || amount <= 0) {
-            showSnackbar("Invalid amount");
-            return;
-        }
-
-        openConfirmModal(`Withdraw ${amount} points from player?`, async () => {
-            const res = await fetch('/api/withdraw-points-player', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    userId: withdrawUserId,
-                    amount: Number(amount)
-                })
+                showSnackbar(data.message, true);
+                loadPlayers();
             });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                showSnackbar(data.error);
-                return;
-            }
-
-            showSnackbar(data.message, true);
-            closeWithdrawModal();
-            loadPlayers();
-        });
-    }
+        }
         // Call after session check
         checkSession();
         setInterval(loadWithdrawCount, 10000);
