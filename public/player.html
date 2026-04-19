@@ -263,6 +263,18 @@
                 </div>
             </div>
         </div>
+        <!-- BET CONFIRM MODAL -->
+        <div id="betConfirmModal" class="modal">
+            <div class="modal-content">
+                <h3>Confirm Bet</h3>
+                <p id="confirmText"></p>
+
+                <div style="margin-top:10px;">
+                    <button onclick="confirmBet()">CONFIRM</button>
+                    <button onclick="closeBetModal()">CANCEL</button>
+                </div>
+            </div>
+        </div>
     </div> <!-- content -->
     <footer>
         © 2024 Pitwarriors619. All rights reserved.
@@ -281,6 +293,10 @@
         wala: 0,
         draw: 0,
         balance: 0
+    };
+    let pendingBet = {
+        side: null,
+        amount: 0
     };
     function formatNumber(num) {
         return Number(num || 0).toLocaleString(undefined, {
@@ -322,27 +338,44 @@
         document.getElementById('betAmount').value = val;
     }
 
-    async function placeBet(side){
+    function placeBet(side){
         const amount = Number(document.getElementById('betAmount').value);
         const balance = Number(document.getElementById('balance').textContent);
+
         if (game.status !== 'OPEN') {
             return showSnackbar("Betting is closed", "warning");
         }
+
         if (!amount || amount <= 0) {
             return showSnackbar("Enter valid amount", "warning");
         }
 
         if (amount > balance) {
-            showSnackbar("Insufficient balance", "error");
-            return;
+            return showSnackbar("Insufficient balance", "error");
         }
 
+        // ✅ STORE pending bet
+        pendingBet.side = side.toUpperCase();
+        pendingBet.amount = amount;
+
+        // ✅ SET MODAL TEXT
+        document.getElementById('confirmText').innerText =
+            `You are betting ₱${amount.toLocaleString()} on ${pendingBet.side}`;
+
+        // ✅ OPEN MODAL
+        document.getElementById('betConfirmModal').style.display = 'flex';
+    }
+    // ✅ CLOSE BET MODAL
+    async function confirmBet(){
         try {
             const res = await fetch('/api/place-bet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ side: side.toUpperCase(), amount })
+                body: JSON.stringify({
+                    side: pendingBet.side,
+                    amount: pendingBet.amount
+                })
             });
 
             const data = await res.json();
@@ -353,20 +386,21 @@
 
             showSnackbar("Bet placed successfully!");
 
-            // 🔄 Refresh UI immediately
             document.getElementById('betAmount').value = '';
-            
-                fetchGame();
-                checkPlayerBalance();
-            
+            closeBetModal();
+
+            // refresh UI
+            fetchGame();
+            checkPlayerBalance();
 
         } catch (err) {
             console.error(err);
             showSnackbar(err.message, "error");
         }
     }
-
-
+    function closeBetModal(){
+        document.getElementById('betConfirmModal').style.display = 'none';
+    }
     
     // 🔥 LIVE GAME STATUS
     async function fetchGame(){
@@ -794,7 +828,7 @@
         const meronBtn = document.getElementById('btnMeronWin');
         const walaBtn = document.getElementById('btnWalaWin');
         const drawBtn = document.getElementById('btnDrawWin');
-        const cancelBtn = document.getElementById('btnCancel');
+        const cancelBtn = document.getElementById('btnCancelWin');
 
         const streamOnBtn = document.getElementById('btnStreamOn');
         const streamOffBtn = document.getElementById('btnStreamOff');
