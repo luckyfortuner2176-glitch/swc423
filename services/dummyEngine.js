@@ -9,7 +9,7 @@ async function startDummyEngine(declaratorId) {
     if (running) return;
 
     running = true;
-    console.log("🔥 Dummy engine started");
+    await console.log("🔥 Dummy engine started");
 
     runWave(declaratorId);
 }
