@@ -74,11 +74,9 @@
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    filter: brightness(0.7); /* slight dim instead of gray */
 }
-.declare-btn.active.btn-meron { background: #dc2626; }   /* RED */
-.declare-btn.active.btn-wala { background: #2563eb; }    /* BLUE */
-.declare-btn.active.btn-draw { background: #16a34a; }    /* GREEN */
-.declare-btn.active.btn-cancel { background: #9ca3af; }  /* GRAY */
+
 </style>
 </head>
 
@@ -388,16 +386,16 @@ button:disabled {
 
             // 🔥 ADD active to the clicked button
             if(side === 'MERON'){
-                document.getElementById('btnMeronWin').classList.add('active');
+                document.getElementById('btnMeronWin');
             }
             if(side === 'WALA'){
-                document.getElementById('btnWalaWin').classList.add('active');
+                document.getElementById('btnWalaWin');
             }
             if(side === 'DRAW'){
-                document.getElementById('btnDrawWin').classList.add('active');
+                document.getElementById('btnDrawWin');
             }
             if(side === 'CANCELLED'){
-                document.getElementById('btnCancelWin').classList.add('active');
+                document.getElementById('btnCancelWin');
             }
 
             // 🔥 YOUR EXISTING API CALL
