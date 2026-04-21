@@ -694,16 +694,45 @@ button:disabled {
     }
 
     async function loadBets() {
-        const res = await fetch('/api/active-bets', { credentials:'include' });
-        const data = await res.json();
+        try {
+            const res = await fetch('/api/active-bets', { credentials:'include' });
+            const data = await res.json();
 
-        const newHash = generateHash(data);
+            const newHash = generateHash(data);
 
-        if (newHash === lastHash) return;
+            // ✅ Skip if no changes
+            if (newHash === lastHash) return;
 
-        lastHash = newHash;
+            lastHash = newHash;
 
-        // render UI
+            // ✅ RENDER UI (YOU REMOVED THIS BEFORE)
+            const meronDiv = document.getElementById('meronList');
+            const walaDiv = document.getElementById('walaList');
+
+            meronDiv.innerHTML = '';
+            walaDiv.innerHTML = '';
+
+            data.meron.forEach(bet => {
+                meronDiv.innerHTML += `
+                    <div class="bet-item">
+                        <span>${bet.username}</span>
+                        <span>${Number(bet.amount).toLocaleString()}</span>
+                    </div>
+                `;
+            });
+
+            data.wala.forEach(bet => {
+                walaDiv.innerHTML += `
+                    <div class="bet-item">
+                        <span>${bet.username}</span>
+                        <span>${Number(bet.amount).toLocaleString()}</span>
+                    </div>
+                `;
+            });
+
+        } catch (err) {
+            console.error(err);
+        }
     }
     function updateControls(gameStatus, streamEnabled){
         const startBtn = document.getElementById('btnStart');
