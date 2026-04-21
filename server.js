@@ -2020,7 +2020,6 @@ app.get('/api/commission-summary', async (req, res) => {
         }
 
         const query = `
-            const query = `
               SELECT 
                   COALESCE(g.event_name, 'NO EVENT') AS event_name,
                   MAX(g.created_at) AS created_at,
@@ -2030,7 +2029,6 @@ app.get('/api/commission-summary', async (req, res) => {
               WHERE ct.user_id = $1
               GROUP BY COALESCE(g.event_name, 'NO EVENT')
               ORDER BY MAX(g.created_at) DESC NULLS LAST;
-          `;
         `;
 
         console.log("USER ID:", testUserId);     // DEBUG
