@@ -616,28 +616,23 @@ button:disabled {
             const res = await fetch('/api/active-event');
             const data = await res.json();
 
-            const iframe = document.getElementById('videoFrame');
+            document.getElementById('eventHeader').textContent =
+                data.event_name || "NO EVENT";
 
-            // ✅ Only update text if changed
-            if (document.getElementById('eventHeader').textContent !== data.event_name) {
-                document.getElementById('eventHeader').textContent =
-                    data.event_name || "NO EVENT";
+            document.getElementById('announcementBar').textContent =
+                data.announcement || "Welcome Players";
+
+            // ✅ HANDLE STREAM ON/OFF
+            if (data.stream_enabled === false) {
+                document.getElementById('videoFrame').style.display = "none";
+                return;
+            } else {
+                document.getElementById('videoFrame').style.display = "block";
             }
 
-            if (document.getElementById('announcementBar').textContent !== data.announcement) {
-                document.getElementById('announcementBar').textContent =
-                    data.announcement || "Welcome Players";
-            }
-
-            // ✅ Only update visibility if changed
-            const shouldShow = data.stream_enabled !== false;
-            if (iframe.style.display !== (shouldShow ? "block" : "none")) {
-                iframe.style.display = shouldShow ? "block" : "none";
-            }
-
-            // ✅ Only update video if changed
+            // ✅ UPDATE VIDEO ONLY IF CHANGED
             if (data.video_url && data.video_url !== currentVideo) {
-                iframe.src = data.video_url;
+                document.getElementById('videoFrame').src = data.video_url;
                 currentVideo = data.video_url;
             }
 
@@ -841,27 +836,9 @@ button:disabled {
     // 🚀 START REALTIME
     realtimeLoop();
     // initial
-    let isRunning = false;
+    loadCore();
+    loadFast();
 
-async function realtimeLoop() {
-    if (isRunning) return; // prevent overlap
-    isRunning = true;
-
-    try {
-        await fetchGame();
-        await fetchEvent();
-
-        if (game.status === 'OPEN') {
-            await loadBets();
-        }
-    } catch (e) {
-        console.error(e);
-    }
-
-    isRunning = false;
-
-    setTimeout(realtimeLoop, 1500); // ✅ waits AFTER finish
-}
     
    
 
