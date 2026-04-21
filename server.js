@@ -1039,12 +1039,40 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.user.id;
 
-        // ✅ 1. GET THE LATEST GAME
-        const gameRes = await pool.query(
-            `SELECT * FROM games ORDER BY created_at DESC LIMIT 1;`
-        );
+        const result = await pool.query(`
+            SELECT 
+                g.id,
+                g.fight_number,
+                g.status,
 
-        if (gameRes.rows.length === 0) {
+                -- TOTAL BETS
+                COALESCE(SUM(CASE WHEN b.side='MERON' THEN b.amount END),0) AS "totalMeron",
+                COALESCE(SUM(CASE WHEN b.side='WALA' THEN b.amount END),0) AS "totalWala",
+                COALESCE(SUM(CASE WHEN b.side='DRAW' THEN b.amount END),0) AS "totalDraw",
+
+                -- USER BETS
+                COALESCE(SUM(CASE WHEN b.side='MERON' AND b.user_id=$1 THEN b.amount END),0) AS "myMeron",
+                COALESCE(SUM(CASE WHEN b.side='WALA' AND b.user_id=$1 THEN b.amount END),0) AS "myWala",
+                COALESCE(SUM(CASE WHEN b.side='DRAW' AND b.user_id=$1 THEN b.amount END),0) AS "myDraw",
+
+                -- PLAYER BETS (REAL USERS ONLY)
+                COALESCE(SUM(CASE WHEN b.side='MERON' AND b.is_dummy=false AND u.role='player' THEN b.amount END),0) AS "playerMeron",
+                COALESCE(SUM(CASE WHEN b.side='WALA' AND b.is_dummy=false AND u.role='player' THEN b.amount END),0) AS "playerWala",
+                COALESCE(SUM(CASE WHEN b.side='DRAW' AND b.is_dummy=false AND u.role='player' THEN b.amount END),0) AS "playerDraw"
+
+            FROM games g
+            LEFT JOIN bets b ON b.game_id = g.id
+            LEFT JOIN users u ON u.id = b.user_id
+
+            WHERE g.id = (
+                SELECT id FROM games ORDER BY created_at DESC LIMIT 1
+            )
+
+            GROUP BY g.id
+        `, [userId]);
+
+        // ✅ NO GAME CASE
+        if (result.rows.length === 0) {
             return res.json({
                 fightNumber: 0,
                 status: "CLOSED",
@@ -1053,64 +1081,30 @@ app.get('/api/game-status', isAuthenticated, async (req, res) => {
                 totalDraw: 0,
                 myMeron: 0,
                 myWala: 0,
-                myDraw: 0
+                myDraw: 0,
+                playerMeron: 0,
+                playerWala: 0,
+                playerDraw: 0
             });
         }
 
-        const game = gameRes.rows[0];
+        const data = result.rows[0];
 
-        // ✅ 2. GET TOTAL BETS
-        const totalsRes = await pool.query(`
-            SELECT
-                COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "totalMeron",
-                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "totalWala",
-                COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS "totalDraw"
-            FROM bets
-            WHERE game_id = $1
-        `, [game.id]);
-
-        const totals = totalsRes.rows[0];
-
-        // ✅ 3. GET USER BETS
-        const myRes = await pool.query(`
-            SELECT
-                COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS "myMeron",
-                COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS "myWala",
-                COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS "myDraw"
-            FROM bets
-            WHERE game_id = $1 AND user_id = $2
-        `, [game.id, userId]);
-
-        const my = myRes.rows[0];
-        
-        // ✅ 3. GET PLAYER BETS
-        const playerRes = await pool.query(`
-          SELECT
-              COALESCE(SUM(CASE WHEN b.side='MERON' THEN b.amount END),0) AS "playerMeron",
-              COALESCE(SUM(CASE WHEN b.side='WALA' THEN b.amount END),0) AS "playerWala",
-              COALESCE(SUM(CASE WHEN b.side='DRAW' THEN b.amount END),0) AS "playerDraw"
-          FROM bets b
-          JOIN users u ON u.id = b.user_id
-          WHERE b.game_id = $1
-            AND b.is_dummy = false
-            AND u.role = 'player'   -- 🔥 ONLY REAL PLAYERS
-      `, [game.id]);
-
-        const playerBets = playerRes.rows[0];
-
-        // ✅ 4. RETURN DATA
         res.json({
-            fightNumber: game.fight_number,
-            status: game.status,
-            totalMeron: Number(totals.totalMeron),
-            totalWala: Number(totals.totalWala),
-            totalDraw: Number(totals.totalDraw),
-            myMeron: Number(my.myMeron),
-            myWala: Number(my.myWala),
-            myDraw: Number(my.myDraw),
-            playerMeron: Number(playerBets.playerMeron),
-            playerWala: Number(playerBets.playerWala),
-            playerDraw: Number(playerBets.playerDraw)
+            fightNumber: data.fight_number,
+            status: data.status,
+
+            totalMeron: Number(data.totalMeron),
+            totalWala: Number(data.totalWala),
+            totalDraw: Number(data.totalDraw),
+
+            myMeron: Number(data.myMeron),
+            myWala: Number(data.myWala),
+            myDraw: Number(data.myDraw),
+
+            playerMeron: Number(data.playerMeron),
+            playerWala: Number(data.playerWala),
+            playerDraw: Number(data.playerDraw)
         });
 
     } catch (err) {

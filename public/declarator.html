@@ -261,6 +261,7 @@ button:disabled {
     </div>
 </div>
 <script>
+    let lastBetCount = 0;
     let game = {};
     let userId = null;
     let pendingBet = {
@@ -686,41 +687,23 @@ button:disabled {
             showSnackbar("Server error", "error");
         }
     }
+    let lastHash = "";
+
+    function generateHash(data){
+        return JSON.stringify(data);
+    }
+
     async function loadBets() {
-        try {
-            const res = await fetch('/api/active-bets', {
-            credentials: 'include'
-            });
+        const res = await fetch('/api/active-bets', { credentials:'include' });
+        const data = await res.json();
 
-            const data = await res.json();
+        const newHash = generateHash(data);
 
-            const meronDiv = document.getElementById('meronList');
-            const walaDiv = document.getElementById('walaList');
+        if (newHash === lastHash) return;
 
-            meronDiv.innerHTML = '';
-            walaDiv.innerHTML = '';
+        lastHash = newHash;
 
-            data.meron.forEach(bet => {
-            meronDiv.innerHTML += `
-                <div class="bet-item">
-                <span>${bet.username}</span>
-                <span>${bet.amount}</span>
-                </div>
-            `;
-            });
-
-            data.wala.forEach(bet => {
-            walaDiv.innerHTML += `
-                <div class="bet-item">
-                <span>${bet.username}</span>
-                <span>${bet.amount}</span>
-                </div>
-            `;
-            });
-
-        } catch (err) {
-            console.error(err);
-        }
+        // render UI
     }
     function updateControls(gameStatus, streamEnabled){
         const startBtn = document.getElementById('btnStart');
@@ -807,7 +790,14 @@ button:disabled {
             await loadBets();
         }
 
-        requestAnimationFrame(realtimeLoop); // ⚡ ultra-fast loop
+        setInterval(async () => {
+            await fetchGame();
+            await fetchEvent();
+
+            if (game.status === 'OPEN') {
+                await loadBets();
+            }
+        }, 1000); // every 1 second
     }
 
     // 🚀 START REALTIME
