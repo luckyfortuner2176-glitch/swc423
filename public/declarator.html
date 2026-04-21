@@ -275,6 +275,16 @@ button:disabled {
             maximumFractionDigits: 2
         });
     }
+    function setText(id, value){
+        const el = document.getElementById(id);
+        if (!el) return; // safety
+
+        const newValue = String(value);
+
+        if (el.textContent !== newValue){
+            el.textContent = newValue;
+        }
+    }
     async function checkSession(requiredRole = null) {
         try {
             const res = await fetch('/api/dashboard', {
@@ -482,11 +492,11 @@ button:disabled {
             const res = await fetch('/api/game-status',{credentials:'include'});
             const data = await res.json();
 
-            document.getElementById('fightNumber').textContent = data.fightNumber;
-            document.getElementById('totalMeron').textContent = formatNumber(data.totalMeron);
-            document.getElementById('totalWala').textContent = formatNumber(data.totalWala);
-            document.getElementById('playerMeron').textContent = formatNumber(data.playerMeron);
-            document.getElementById('playerWala').textContent = formatNumber(data.playerWala);
+            setText('fightNumber', data.fightNumber);
+            setText('totalMeron', formatNumber(data.totalMeron));
+            setText('totalWala', formatNumber(data.totalWala));
+            setText('playerMeron', formatNumber(data.playerMeron));
+            setText('playerWala', formatNumber(data.playerWala));
             
 
             const totalPool =
@@ -631,9 +641,19 @@ button:disabled {
             }
 
             // ✅ UPDATE VIDEO ONLY IF CHANGED
-            if (data.video_url && data.video_url !== currentVideo) {
-                document.getElementById('videoFrame').src = data.video_url;
-                currentVideo = data.video_url;
+            if (data.video_url) {
+                let url = data.video_url;
+
+                // ✅ Ensure autoplay (fix iPhone interaction lag)
+                if (!url.includes("autoplay=1")) {
+                    url += (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1";
+                }
+
+                // ✅ Only update iframe if changed (prevents reload lag)
+                if (url !== currentVideo) {
+                    document.getElementById('videoFrame').src = url;
+                    currentVideo = url;
+                }
             }
 
         }catch(err){
@@ -814,27 +834,31 @@ button:disabled {
     async function loadFast() {
         await loadBets();
     }
-    async function realtimeLoop() {
-        await fetchGame();
-        await fetchEvent();
+    let realtimeInterval = null;
 
-        // ✅ Only load bets if OPEN (prevents useless spam)
-        if (game.status === 'OPEN') {
-            await loadBets();
-        }
+    function startRealtime() {
+        if (realtimeInterval) return; // ✅ prevent duplicates
 
-        setInterval(async () => {
+        let tick = 0;
+
+        realtimeInterval = setInterval(async () => {
             await fetchGame();
-            await fetchEvent();
 
+            // ✅ fetch event every 3 seconds only
+            if (tick % 3 === 0) {
+                await fetchEvent();
+            }
+
+            // ✅ only load bets when needed
             if (game.status === 'OPEN') {
                 await loadBets();
             }
-        }, 1000); // every 1 second
+
+            tick++;
+        }, 1000);
     }
 
-    // 🚀 START REALTIME
-    realtimeLoop();
+    startRealtime();
     // initial
     loadCore();
     loadFast();

@@ -95,7 +95,9 @@ button {
 button:hover {
     opacity: 0.9;
 }
-
+button {
+    touch-action: manipulation;
+}
 /* ==========================
    DASHBOARD LAYOUT
 ========================== */
