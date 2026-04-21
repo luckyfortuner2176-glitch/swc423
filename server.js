@@ -12,6 +12,8 @@ const app = express();
 const allowedOrigin = 'https://swc888.live/';
 const { placeBet } = require('./controllers/game');
 const { startDummyEngine, stopDummyEngine } = require('./services/dummyEngine');
+require('./websocket'); // start WebSocket server
+const { broadcast } = require('./websocket');
 
 const loginLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 15 minutes
@@ -1049,6 +1051,13 @@ app.post('/api/place-bet', isAuthenticated, async (req, res) => {
 
     try {
         const result = await placeBet(userId, side, Number(amount));
+
+        // 🔥 notify all clients
+        broadcast("BET_PLACED", {
+          userId,
+          side,
+          amount
+        });
         res.json(result);
 
     } catch (err) {
@@ -1392,7 +1401,9 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
       event_name: "",
       announcement: `Game Started - Fight #${fightNumber}`
     });
-
+    broadcast("GAME_STARTED", {
+      fightNumber,
+    });
     res.json({
       message: "Game started",
       game: result.rows[0]
@@ -1446,7 +1457,9 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
       announcement: `Betting Closed`,
       
     });
-
+    broadcast("GAME_CLOSED", {
+      gameId: game.id
+    });
     return res.json({
       message: "Betting closed",
       game: updateRes.rows[0]
@@ -1484,7 +1497,9 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     const gameId = result.rows[0].id;
 
     // 🔥 VERY IMPORTANT (THIS WAS MISSING)
-    
+    broadcast("GAME_RESULT", {
+      winner
+    });
 
     let announcementText = "";
 
@@ -1499,7 +1514,9 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
       event_name: "",
       announcement: announcementText,
     });
-
+    broadcast("EVENT_UPDATE", {
+      announcement: announcementText
+    });
     res.json({
       message: "Winner declared",
       game: result.rows[0]

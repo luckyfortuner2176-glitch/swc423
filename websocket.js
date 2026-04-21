@@ -1,29 +1,86 @@
+// websocket.js
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 3001 });
+let wss;
 
-let clients = [];
+// Store clients with metadata
+const clients = new Map(); 
+// ws → { userId, role }
 
-wss.on('connection', (ws) => {
-    console.log("Client connected");
+function init(server) {
+    wss = new WebSocket.Server({ server });
 
-    clients.push(ws);
+    wss.on('connection', (ws, req) => {
+        console.log("Client connected");
 
-    ws.on('close', () => {
-        console.log("Client disconnected");
-        clients = clients.filter(c => c !== ws);
-    });
-});
+        // 👉 You can extract session/cookies here later
+        const user = {
+            userId: null,
+            role: null
+        };
 
-// ✅ THIS is what your APIs will use
-function broadcast(type, payload) {
-    const msg = JSON.stringify({ type, payload });
+        clients.set(ws, user);
 
-    clients = clients.filter(ws => ws.readyState === WebSocket.OPEN);
+        ws.on('message', (msg) => {
+            try {
+                const data = JSON.parse(msg);
 
-    clients.forEach(ws => {
-        ws.send(msg);
+                // 🔐 AUTH HANDSHAKE
+                if (data.type === 'auth') {
+                    user.userId = data.userId;
+                    user.role = data.role;
+
+                    console.log("Authenticated:", user);
+                }
+
+            } catch (err) {
+                console.error("Invalid WS message");
+            }
+        });
+
+        ws.on('close', () => {
+            console.log("Client disconnected");
+            clients.delete(ws);
+        });
     });
 }
 
-module.exports = { broadcast };
+// 🎯 Broadcast to ALL
+function broadcast(type, payload) {
+    const msg = JSON.stringify({ type, payload });
+
+    for (const [ws] of clients) {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(msg);
+        }
+    }
+}
+
+// 🎯 Send to ONE USER
+function sendToUser(userId, type, payload) {
+    const msg = JSON.stringify({ type, payload });
+
+    for (const [ws, meta] of clients) {
+        if (meta.userId === userId && ws.readyState === WebSocket.OPEN) {
+            ws.send(msg);
+        }
+    }
+}
+
+// 🎯 Send by ROLE (admin, player, etc)
+function sendToRole(role, type, payload) {
+    const msg = JSON.stringify({ type, payload });
+
+    for (const [ws, meta] of clients) {
+        if (meta.role === role && ws.readyState === WebSocket.OPEN) {
+            ws.send(msg);
+        }
+    }
+}
+
+module.exports = {
+    init,
+    broadcast,
+    sendToUser,
+    sendToRole
+};
