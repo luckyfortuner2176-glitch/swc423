@@ -331,7 +331,7 @@ app.get('/summary.html', authorizeRoles('admin'), (req, res) =>
 app.get('/wallet-logs.html', authorizeRoles('admin','master_agent', 'sub_agent', 'agent'), (req, res) =>
   res.sendFile(__dirname + '/public/wallet-logs.html')
 );
-app.get('/commission-logs.html', authorizeRoles('admin'), (req, res) =>
+app.get('/commission-logs.html', authorizeRolesauthorizeRoles('admin','master_agent', 'sub_agent', 'agent'), (req, res) =>
   res.sendFile(__dirname + '/public/commission-logs.html')
 );
 app.get('/withdrawal.html', authorizeRoles('admin','master_agent', 'sub_agent', 'agent'), (req, res) =>
