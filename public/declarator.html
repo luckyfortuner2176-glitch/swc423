@@ -554,9 +554,9 @@ button:disabled {
                     amount: pendingBet.amount
                 })
             });
-            closeBetModal();
+            
             const data = await res.json();
-
+            closeBetModal();
             if (!res.ok) {
                 throw new Error(data.error || "Bet failed");
             }
