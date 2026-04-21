@@ -191,33 +191,30 @@
                 const from = document.getElementById('from')?.value || '';
                 const to = document.getElementById('to')?.value || '';
 
-                const params = new URLSearchParams({
-                    search,
-                    from,
-                    to
-                });
+                const params = new URLSearchParams({ search, from, to });
 
                 const res = await fetch(`/api/commission-summary?${params}`, {
                     credentials: 'include'
                 });
 
-                if (res.status === 401) {
-                    window.location.href = '/';
-                    return;
-                }
-
                 const data = await res.json();
-                console.log("SUMMARY DATA:", data); // 👈 ADD THIS
+                console.log("SUMMARY DATA:", data); // DEBUG
+
                 const tbody = document.querySelector('#walletTable tbody');
                 tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = `<tr><td colspan="3">No data found</td></tr>`;
+                    return;
+                }
 
                 data.forEach(row => {
                     const tr = document.createElement('tr');
 
                     tr.innerHTML = `
-                        <td>${row.event_name || 'NO EVENT'}</td>
+                        <td>${row.event_name}</td>
                         <td>${row.created_at ? new Date(row.created_at).toLocaleString() : '-'}</td>
-                        <td>${Number(row.total_commission || 0).toFixed(2)}</td>
+                        <td>${Number(row.total_commission).toFixed(2)}</td>
                     `;
 
                     tbody.appendChild(tr);

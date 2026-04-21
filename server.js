@@ -1995,10 +1995,13 @@ app.get('/api/commission-summary', async (req, res) => {
     try {
         const userId = req.session.userId;
 
+        // 🔥 TEMP fallback for testing (REMOVE later)
+        const testUserId = userId || 0;
+
         const { search = '', from = '', to = '' } = req.query;
 
         let conditions = [`ct.user_id = $1`];
-        let values = [userId];
+        let values = [testUserId];
         let index = 2;
 
         if (from) {
@@ -2018,17 +2021,23 @@ app.get('/api/commission-summary', async (req, res) => {
 
         const query = `
             SELECT 
-                g.event_name,
-                MAX(g.created_at) AS created_at, -- ✅ ADD THIS
+                COALESCE(g.event_name, 'NO EVENT') AS event_name,
+                MAX(g.created_at) AS created_at,
                 COALESCE(SUM(ct.amount), 0) AS total_commission
             FROM commission_transactions ct
             LEFT JOIN games g ON g.id = ct.game_id
             WHERE ${conditions.join(' AND ')}
             GROUP BY g.event_name
             ORDER BY MAX(g.created_at) DESC;
-          `;
+        `;
+
+        console.log("USER ID:", testUserId);     // DEBUG
+        console.log("QUERY:", query);           // DEBUG
+        console.log("VALUES:", values);         // DEBUG
 
         const result = await pool.query(query, values);
+
+        console.log("RESULT:", result.rows);    // DEBUG
 
         res.json(result.rows);
 
