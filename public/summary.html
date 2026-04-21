@@ -59,7 +59,7 @@
                     <thead>
                         <tr>
                             <th>Event Name</th>
-                            <th>Total Fights</th>
+                            <th>Created At</th>
                             <th>Total Commission</th>
                         </tr>
                     </thead>
@@ -215,7 +215,7 @@
 
                     tr.innerHTML = `
                         <td>${row.event_name || 'NO EVENT'}</td>
-                        <td>${row.total_fights}</td>
+                        <td>${row.created_at ? new Date(row.created_at).toLocaleString() : '-'}</td>
                         <td>${Number(row.total_commission || 0).toFixed(2)}</td>
                     `;
 

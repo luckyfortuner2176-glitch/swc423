@@ -2019,14 +2019,14 @@ app.get('/api/commission-summary', async (req, res) => {
         const query = `
             SELECT 
                 g.event_name,
-                COUNT(DISTINCT g.id) AS total_fights,
-                SUM(ct.amount) AS total_commission
+                MAX(g.created_at) AS created_at, -- ✅ ADD THIS
+                COALESCE(SUM(ct.amount), 0) AS total_commission
             FROM commission_transactions ct
             LEFT JOIN games g ON g.id = ct.game_id
             WHERE ${conditions.join(' AND ')}
             GROUP BY g.event_name
-            ORDER BY total_commission DESC
-        `;
+            ORDER BY MAX(g.created_at) DESC;
+          `;
 
         const result = await pool.query(query, values);
 
