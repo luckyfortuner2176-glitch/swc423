@@ -302,7 +302,7 @@ button:disabled {
             }
             // ✅ LOAD BALANCE AFTER USER IS KNOWN
             fetchBalance();
-            setInterval(fetchBalance, 3000);
+            setInterval(fetchBalance, 1000);
         } catch (err) {
             console.error(err);
             window.location.href = '/';
@@ -317,6 +317,7 @@ button:disabled {
     }
 
     async function startGame(){
+        closeStartModal();
         try {
             const fightNumber = document.getElementById('fightInput').value;
 
@@ -347,7 +348,7 @@ button:disabled {
                     message
                 })
             });
-            closeStartModal();
+            
 
         } catch (err) {
             console.error(err);
@@ -542,6 +543,7 @@ button:disabled {
         openBetModal(side.toUpperCase(), amount);
     }
     async function confirmBet(){
+        closeBetModal();
         try{
             const res = await fetch('/api/place-bet',{
                 method:'POST',
@@ -562,7 +564,7 @@ button:disabled {
             showSnackbar("Bet placed!");
 
             document.getElementById('betAmount').value = '';
-            closeBetModal();
+            
 
             // refresh
             fetchGame();
@@ -604,7 +606,7 @@ button:disabled {
 
         setTimeout(()=>{
             sb.classList.remove("show");
-        },3000);
+        },1000);
     }
     // 📢 FETCH ACTIVE EVENT
     let currentVideo = "";
@@ -659,6 +661,7 @@ button:disabled {
     }
 
     async function saveVideo(){
+        closeVideoModal();
         const video_url = document.getElementById('videoUrlInput').value;
 
         if(!video_url){
@@ -680,7 +683,7 @@ button:disabled {
             }
 
             showSnackbar("Video updated!");
-            closeVideoModal();
+            
 
         }catch(err){
             console.error(err);
