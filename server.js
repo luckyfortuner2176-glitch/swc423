@@ -901,7 +901,7 @@ app.post('/api/update-commission', isAuthenticated, async (req, res) => {
       [currentUserId]
     );
 
-    const maxAllowed = (currentUser.rows[0].commission_rate || 0) - 1;
+    const maxAllowed = (currentUser.rows[0].commission_rate || 0) - 0.1;
 
     if (rate < 0 || rate > maxAllowed) {
       return res.status(400).json({ error: "Invalid commission rate" });
