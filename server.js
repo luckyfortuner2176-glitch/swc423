@@ -2020,15 +2020,17 @@ app.get('/api/commission-summary', async (req, res) => {
         }
 
         const query = `
-            SELECT 
-              COALESCE(g.event_name, 'NO EVENT') AS event_name,
-              MAX(g.created_at) AS created_at,
-              SUM(ct.amount) AS total_commission
-          FROM commission_transactions ct
-          LEFT JOIN games g ON g.id = ct.game_id
-          WHERE ct.user_id = 4
-          GROUP BY COALESCE(g.event_name, 'NO EVENT')
-          ORDER BY MAX(g.created_at) DESC NULLS LAST;
+            const query = `
+              SELECT 
+                  COALESCE(g.event_name, 'NO EVENT') AS event_name,
+                  MAX(g.created_at) AS created_at,
+                  SUM(ct.amount) AS total_commission
+              FROM commission_transactions ct
+              LEFT JOIN games g ON g.id = ct.game_id
+              WHERE ct.user_id = $1
+              GROUP BY COALESCE(g.event_name, 'NO EVENT')
+              ORDER BY MAX(g.created_at) DESC NULLS LAST;
+          `;
         `;
 
         console.log("USER ID:", testUserId);     // DEBUG
