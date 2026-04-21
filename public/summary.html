@@ -45,24 +45,22 @@
 
         <div class="content">
             <h2>Commission Summary</h2>
-            <thead>
-                <tr>
-                    <th>Event Name</th>
-                    <th>Total Fights</th>
-                    <th>Total Commission</th>
-                </tr>
-            </thead>
+
+            <!-- FILTERS -->
+            <div class="filters">
+                <input type="text" id="search" placeholder="Search event name">
+                <input type="date" id="from">
+                <input type="date" id="to">
+                <button onclick="loadCommissionSummary()">Search</button>
+            </div>
+
             <div class="table-wrapper">
                 <table class="styled-table" id="walletTable">
                     <thead>
-                         <tr>
-                            <th>Date</th>
-                            <th>Source User</th>
-                            <th>Base Amount</th>
-                            <th>Rate (%)</th>
-                            <th>Commission Amount</th>
-                            <th>Level</th>
-                            <th>Game (Fight #)</th>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Total Fights</th>
+                            <th>Total Commission</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
