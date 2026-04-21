@@ -476,6 +476,9 @@
                 if (gameStatus !== 'OPEN') {
                     disableBetting("Betting is " + gameStatus);
                     if (gameStatus === 'RESOLVED') {
+                        // 🔥 ADD THESE HERE
+                        fetchMyResult();
+                        checkPlayerBalance();
                         fetchHistory();
                         loadBeads();
                     }
@@ -886,6 +889,26 @@
             mux.style.display = "block";
         }
     }
+
+    async function fetchMyResult(){
+        try {
+            const res = await fetch('/api/my-result', {
+                credentials: 'include'
+            });
+
+            const data = await res.json();
+
+            if (data.result === "WIN") {
+                showSnackbar(`🎉 You won ₱${formatNumber(data.winAmount)}`);
+            } else if (data.result === "LOSE") {
+                showSnackbar("😢 You lost this round", "warning");
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     setInterval(fetchGame, 1000);
     checkSession('player');   
     fetchGame();

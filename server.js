@@ -1968,3 +1968,23 @@ app.post('/api/withdraw-points-player', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Transaction failed" });
   }
 });
+// ==========================
+// MY RESULT API (TO SHOW WIN/LOSE STATUS AND WIN AMOUNT AFTER GAME IS RESOLVED)
+// ==========================
+app.get('/api/my-result', async (req, res) => {
+    const userId = req.session.userId;
+
+    const bet = await Bets.findOne({
+        userId,
+        gameId: currentGameId
+    });
+
+    if (!bet) {
+        return res.json({ result: "NO_BET" });
+    }
+
+    res.json({
+        result: bet.result, // WIN / LOSE
+        winAmount: bet.winAmount
+    });
+});
