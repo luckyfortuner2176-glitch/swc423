@@ -209,7 +209,7 @@ const upsertActiveEvent = async ({ gameId, event_name, announcement, video_url }
 // MIDDLEWARE
 // ==========================
 app.use(cors({
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   credentials: true
 }));
 
