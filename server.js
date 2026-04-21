@@ -9,24 +9,10 @@ const pool = require('./db/connection');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const app = express();
-const allowedOrigins = [
-  'https://swc888.live',
-  'http://localhost:3000'
-];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+const allowedOrigin = 'https://letsplay-famw.onrender.com';
 const { placeBet } = require('./controllers/game');
 const { startDummyEngine, stopDummyEngine } = require('./services/dummyEngine');
-const { broadcast } = require('./websocket');
+
 const loginLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 15 minutes
   max: 5, // allow max 5 attempts per window per IP
@@ -136,7 +122,7 @@ const settleGame = async (gameId, winner) => {
     for (const bet of bets) {
       if (bet.side !== winner) continue;
 
-      const winAmount = Number((bet.amount * payouts[winner]).toFixed(2)); 
+      const winAmount = bet.amount * payouts[winner];
 
       await pool.query(`
         UPDATE users
@@ -209,7 +195,7 @@ const upsertActiveEvent = async ({ gameId, event_name, announcement, video_url }
 // MIDDLEWARE
 // ==========================
 app.use(cors({
-  origin: allowedOrigins,
+  origin: allowedOrigin,
   credentials: true
 }));
 
@@ -232,7 +218,7 @@ app.use(session({
     pool: pool,
     tableName: 'user_sessions'
   }),
-  secret: process.env.SESSION_SECRET,
+  secret: 'super-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -270,101 +256,88 @@ function authorizeRoles(...roles) {
   };
 }
 
-
 // ==========================
-// PLACE BET API (FIXED)
+// LOGIN ROUTE (FIXED)
 // ==========================
-async function getGameState(userId) {
-    const result = await pool.query(`
-        SELECT 
-            g.id,
-            g.fight_number,
-            g.status,
+app.post('/api/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body;
 
-            COALESCE(SUM(CASE WHEN b.side='MERON' THEN b.amount END),0) AS "totalMeron",
-            COALESCE(SUM(CASE WHEN b.side='WALA' THEN b.amount END),0) AS "totalWala",
-            COALESCE(SUM(CASE WHEN b.side='DRAW' THEN b.amount END),0) AS "totalDraw",
-
-            COALESCE(SUM(CASE WHEN b.side='MERON' AND b.user_id=$1 THEN b.amount END),0) AS "myMeron",
-            COALESCE(SUM(CASE WHEN b.side='WALA' AND b.user_id=$1 THEN b.amount END),0) AS "myWala",
-            COALESCE(SUM(CASE WHEN b.side='DRAW' AND b.user_id=$1 THEN b.amount END),0) AS "myDraw"
-
-        FROM games g
-        LEFT JOIN bets b ON b.game_id = g.id
-        WHERE g.id = (
-            SELECT id FROM games ORDER BY created_at DESC LIMIT 1
-        )
-        GROUP BY g.id
-    `, [userId]);
+  try {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
 
     if (result.rows.length === 0) {
-        return {
-            fightNumber: 0,
-            status: "CLOSED",
-            totalMeron: 0,
-            totalWala: 0,
-            totalDraw: 0,
-            myMeron: 0,
-            myWala: 0,
-            myDraw: 0
-        };
+      return res.status(401).json({ error: "User not found" });
     }
 
-    const data = result.rows[0];
-
-    return {
-        fightNumber: data.fight_number,
-        status: data.status,
-        totalMeron: Number(data.totalMeron),
-        totalWala: Number(data.totalWala),
-        totalDraw: Number(data.totalDraw),
-        myMeron: Number(data.myMeron),
-        myWala: Number(data.myWala),
-        myDraw: Number(data.myDraw)
-    };
-}
-// ==========================
-// GAME STATUS API (NEW)
-// ==========================
-async function getGlobalGameState() {
-    const result = await pool.query(`
-        SELECT 
-            g.id,
-            g.fight_number,
-            g.status,
-
-            COALESCE(SUM(CASE WHEN b.side='MERON' THEN b.amount END),0) AS "totalMeron",
-            COALESCE(SUM(CASE WHEN b.side='WALA' THEN b.amount END),0) AS "totalWala",
-            COALESCE(SUM(CASE WHEN b.side='DRAW' THEN b.amount END),0) AS "totalDraw"
-
-        FROM games g
-        LEFT JOIN bets b ON b.game_id = g.id
-        WHERE g.id = (
-            SELECT id FROM games ORDER BY created_at DESC LIMIT 1
-        )
-        GROUP BY g.id
-    `);
-
-    if (result.rows.length === 0) {
-        return {
-            fightNumber: 0,
-            status: "CLOSED",
-            totalMeron: 0,
-            totalWala: 0,
-            totalDraw: 0
-        };
+    const user = result.rows[0];
+    // ❌ BLOCK PENDING USERS
+    if (user.status === 'pending') {
+      return res.status(403).json({ 
+        error: "Account pending approval. Please wait for approval." 
+      });
+    }
+    if (user.status === 'suspended') {
+      return res.status(403).json({ 
+        error: "Your account has been suspended." 
+      });
+    }
+    // Check if account is locked
+    if (user.lock_until && new Date() < user.lock_until) {
+      const minutesLeft = Math.ceil((new Date(user.lock_until) - new Date()) / 60000);
+      return res.status(403).json({ error: `Account locked. Try again in ${minutesLeft} minute(s).` });
     }
 
-    const data = result.rows[0];
+    const match = await bcrypt.compare(password, user.password);
 
-    return {
-        fightNumber: data.fight_number,
-        status: data.status,
-        totalMeron: Number(data.totalMeron),
-        totalWala: Number(data.totalWala),
-        totalDraw: Number(data.totalDraw)
-    };
-}
+    if (!match) {
+      // Increment failed login attempts
+      let failedAttempts = user.failed_logins + 1;
+      let lockUntil = null;
+
+      if (failedAttempts >= 5) {   // lock after 5 failed attempts
+        lockUntil = new Date(Date.now() + 5 * 60 * 1000); // lock 15 minutes
+        failedAttempts = 0; // reset counter after lock
+      }
+
+      await pool.query(
+        'UPDATE users SET failed_logins = $1, lock_until = $2 WHERE id = $3',
+        [failedAttempts, lockUntil, user.id]
+      );
+
+      return res.status(401).json({ error: lockUntil ? "Account temporarily locked due to repeated failed attempts." : "Wrong password" });
+    }
+
+    // ✅ Reset failed login count on success
+    await pool.query(
+      'UPDATE users SET failed_logins = 0, lock_until = NULL, status = $1 WHERE id = $2',
+      ['online', user.id]
+    );
+
+    // ✅ Existing session save logic
+    req.session.user = { id: user.id, username: user.username, role: user.role };
+    req.session.save(async (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Session error" });
+      }
+
+      res.json({
+        message: "Login success",
+        role: user.role,
+        id: user.id,
+        points: user.points || 0
+      });
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // ==========================
 // ROLE-PROTECTED PAGES
 // ==========================
@@ -1072,24 +1045,10 @@ app.get('/api/my-wallet-transactions', isAuthenticated, async (req, res) => {
 app.post('/api/place-bet', isAuthenticated, async (req, res) => {
 
     const userId = req.session.user.id;
-    const validSides = ['MERON', 'WALA', 'DRAW'];
-
-    if (!validSides.includes(side)) {
-      return res.status(400).json({ error: "Invalid side" });
-    }const { side, amount } = req.body;
+    const { side, amount } = req.body;
 
     try {
         const result = await placeBet(userId, side, Number(amount));
-
-        // 🔥 GET UPDATED GAME STATE
-        const gameState = await getGameState(userId);
-
-        // 🔥 SEND TO ALL CLIENTS
-        broadcast('GAME_UPDATE', {
-          type: 'GAME_UPDATE',
-          payload: gameState
-        });
-
         res.json(result);
 
     } catch (err) {
@@ -1411,57 +1370,37 @@ app.post('/api/reject-withdrawal', isAuthenticated, async (req, res) => {
 app.post('/api/start-game', isAuthenticated, async (req, res) => {
   const { fightNumber, event_name } = req.body;
 
-  if (req.session.user.role !== 'declarator') {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-
   try {
-    await pool.query('BEGIN');
+    if (req.session.user.role !== 'declarator') {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
 
-    // 🔒 LOCK the games table (prevents concurrent start)
-    await pool.query('LOCK TABLE games IN EXCLUSIVE MODE');
-
-    // 1. Close any open game
+    // close any existing open game first (safety)
     await pool.query(`
-      UPDATE games 
-      SET status = 'CLOSED'
-      WHERE status = 'OPEN'
+      UPDATE games SET status='CLOSED'
+      WHERE status='OPEN'
     `);
 
-    // 2. Insert new game
     const result = await pool.query(`
       INSERT INTO games (fight_number, status, event_name)
       VALUES ($1, 'OPEN', $2)
       RETURNING *
     `, [fightNumber, event_name]);
 
-    const newGame = result.rows[0];
-
     await upsertActiveEvent({
-      gameId: newGame.id,
+      gameId: result.rows[0].id,
       event_name: "",
       announcement: `Game Started - Fight #${fightNumber}`
     });
 
-    await pool.query('COMMIT');
-
     res.json({
       message: "Game started",
-      game: newGame
+      game: result.rows[0]
     });
-
-    // 🔥 Broadcast AFTER commit
-    const gameState = await getGlobalGameState();
-    broadcast('GAME_UPDATE', {
-      type: 'GAME_UPDATE',
-      payload: gameState
-    });
-
+    
     startDummyEngine(req.session.user.id);
-
   } catch (err) {
-    await pool.query('ROLLBACK');
-    console.error("START GAME ERROR:", err);
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -1506,11 +1445,6 @@ app.post('/api/close-game', isAuthenticated, async (req, res) => {
       event_name: "",
       announcement: `Betting Closed`,
       
-    });
-    const gameState = await getGlobalGameState();
-    broadcast('GAME_UPDATE', {
-      type: 'GAME_UPDATE',
-      payload: gameState
     });
 
     return res.json({
@@ -1570,25 +1504,13 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
       message: "Winner declared",
       game: result.rows[0]
     });
-
-    const gameState = await getGlobalGameState();
-    broadcast('GAME_UPDATE', {
-      type: 'GAME_UPDATE',
-      payload: gameState
-    });
-
     settleGame(gameId, winner).catch(err => console.error(err));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
-// ==========================
-//  HEALTH CHECK API
-// ==========================
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
+
 // ==========================
 //  ACTIVE EVENT API
 // ==========================
@@ -1625,7 +1547,25 @@ app.post('/api/declarator/set-header', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// ==========================
+//  SET EVENT NAME API (DECLARATOR ONLY)
+// ==========================
+app.post('/api/declarator/set-event-name', isAuthenticated, async (req, res) => {
+  const { event_name } = req.body;
 
+  try {
+    await pool.query(`
+      UPDATE active_event
+      SET event_name = $1, updated_at = NOW()
+      WHERE id = 1
+    `, [event_name]);
+
+    res.json({ message: "Event name updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 // ==========================
 // SET EVENT NAME API (DECLARATOR ONLY)
 // ==========================
@@ -2074,10 +2014,10 @@ app.get('/api/commission-summary', async (req, res) => {
             values.push(to + ' 23:59:59');
         }
 
-        /*if (search) {
+        if (search) {
             conditions.push(`g.event_name ILIKE $${index++}`);
             values.push(`%${search}%`);
-        }*/
+        }
 
         const query = `
               SELECT 
