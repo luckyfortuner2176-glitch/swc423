@@ -9,7 +9,7 @@ const pool = require('./db/connection');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const app = express();
-const allowedOrigin = 'https://letsplay-famw.onrender.com';
+const allowedOrigin = 'https://swc888.live/';
 const { placeBet } = require('./controllers/game');
 const { startDummyEngine, stopDummyEngine } = require('./services/dummyEngine');
 
