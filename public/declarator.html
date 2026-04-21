@@ -543,7 +543,7 @@ button:disabled {
         openBetModal(side.toUpperCase(), amount);
     }
     async function confirmBet(){
-        closeBetModal();
+        
         try{
             const res = await fetch('/api/place-bet',{
                 method:'POST',
@@ -554,7 +554,7 @@ button:disabled {
                     amount: pendingBet.amount
                 })
             });
-
+            closeBetModal();
             const data = await res.json();
 
             if (!res.ok) {
