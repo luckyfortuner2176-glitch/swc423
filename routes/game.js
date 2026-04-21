@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const pool = require('../db/connection');
+const { broadcast } = require('../websocket');
+const { placeBet } = require('../controllers/game');
+const { startDummyEngine, stopDummyEngine } = require('../services/dummyEngine');
+const { settleGame } = require('../services/gameService');
 // ==========================
 //  START GAME (DECLARATOR ONLY)
 // ==========================
@@ -125,7 +130,11 @@ router.post('/close-game', isAuthenticated, async (req, res) => {
 router.post('/declare-winner', isAuthenticated, async (req, res) => {
   const { winner } = req.body;
 
-  stopDummyEngine();
+    try {
+        stopDummyEngine();
+    } catch (e) {
+        console.error("Engine stop failed:", e);
+    }
 
   try {
     if (req.session.user.role !== 'declarator') {
@@ -190,7 +199,7 @@ router.post('/place-bet', isAuthenticated, async (req, res) => {
 
     if (!validSides.includes(side)) {
       return res.status(400).json({ error: "Invalid side" });
-    }const { side, amount } = req.body;
+    }
 
     try {
         const result = await placeBet(userId, side, Number(amount));
