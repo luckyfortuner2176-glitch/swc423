@@ -672,13 +672,21 @@
             const res = await fetch('/api/active-event');
             const data = await res.json();
 
-            if(data.event_name){
-                document.getElementById('event_name').textContent = data.event_name;
-            }
+            // ✅ HEADER
+            document.getElementById('eventHeader').textContent =
+                data.event_name || "NO EVENT";
 
-            if(data.announcement){
-                document.getElementById('marqueeTop').textContent = data.announcement;
-                document.getElementById('marqueeBottom').textContent = data.announcement;
+            document.getElementById('announcementBar').textContent =
+                data.announcement || "Welcome Players";
+
+            // 🔥 FIX: UPDATE VIDEO HERE
+            if (data.video_url && currentMode === 1) {
+                const iframe = document.getElementById('videoFrame');
+
+                // only update if changed (prevents reload spam)
+                if (iframe.src !== data.video_url) {
+                    iframe.src = data.video_url;
+                }
             }
 
         }catch(e){
