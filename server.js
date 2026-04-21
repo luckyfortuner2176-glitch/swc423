@@ -204,7 +204,7 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use('/api', authRoutes);
+
 
 // Prevent caching (important after logout)
 app.use((req, res, next) => {
@@ -232,7 +232,7 @@ app.use(session({
     maxAge: 1000 * 60 * 30
   }
 }));
-
+app.use('/api', authRoutes);
 // ==========================
 // AUTH MIDDLEWARE
 // ==========================
