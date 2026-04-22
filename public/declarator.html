@@ -330,7 +330,6 @@ button:disabled {
         ws.onopen = () => {
             console.log("WS Connected");
 
-            // 🔥 AUTH goes here
             ws.send(JSON.stringify({
                 type: "auth",
                 userId: userId,
@@ -342,12 +341,28 @@ button:disabled {
             const msg = JSON.parse(event.data);
             console.log("WS message:", msg);
 
-            // 👉 handle updates here later
+            switch (msg.type) {
+                case "game":
+                    fetchGame(); // or updateGameUI(msg.data)
+                    break;
+
+                case "bets":
+                    loadBets(); // or renderBets(msg.data)
+                    break;
+
+                case "event":
+                    fetchEvent(); // or updateEventUI(msg.data)
+                    break;
+
+                case "balance":
+                    fetchBalance();
+                    break;
+            }
         };
 
         ws.onclose = () => {
             console.log("WS Disconnected. Reconnecting...");
-            setTimeout(connectWS, 2000); // auto-reconnect
+            setTimeout(connectWS, 2000);
         };
     }
     function openStartModal(){
@@ -608,10 +623,7 @@ button:disabled {
             document.getElementById('betAmount').value = '';
             
 
-            // refresh
-            fetchGame();
-            fetchBalance();
-            loadBets();
+            
 
         }catch(err){
             console.error(err);
