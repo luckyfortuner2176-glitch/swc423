@@ -57,7 +57,7 @@ async function runWave(declaratorId) {
 
         // 🔴 LATE: slow + random (small OR medium)
         } else {
-            intervalSpeed = randomRange(500, 2000);
+            intervalSpeed = randomRange(100, 2000);
 
             if (Math.random() < 0.5) {
                 minBet = 500;
