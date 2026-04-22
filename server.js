@@ -225,10 +225,7 @@ const buildGameState = async (userId) => {
     LEFT JOIN bets b ON b.game_id = g.id
     LEFT JOIN users u ON u.id = b.user_id
 
-    WHERE g.id = (
-      SELECT id FROM games ORDER BY created_at DESC LIMIT 1
-    )
-
+    WHERE g.id = (SELECT id FROM games ORDER BY created_at DESC LIMIT 1)
     GROUP BY g.id
   `, [userId]);
 

@@ -119,15 +119,7 @@ async function runWave(declaratorId) {
 
         if (gameRes2.rows.length > 0) {
             const gameId = gameRes2.rows[0].id;
-
-            const totals = await pool.query(`
-                SELECT
-                    COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS meron,
-                    COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS wala,
-                    COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS draw
-                FROM bets
-                WHERE game_id = $1
-            `, [gameId]);
+            const gameState = await buildGameState(declaratorId);
 
             const betsList = await pool.query(`
                 SELECT b.side, b.amount, u.username
@@ -135,18 +127,18 @@ async function runWave(declaratorId) {
                 LEFT JOIN users u ON b.user_id = u.id
                 WHERE b.game_id = $1
                 ORDER BY b.created_at ASC
-            `, [gameId]);
+            `, [game.id]);
 
-            const gameState = {
-                fightNumber: game.fight_number || game.fightNumber || 0,
-                status: game.status,
-                totalMeron: Number(totals.rows[0].meron),
-                totalWala: Number(totals.rows[0].wala),
-                totalDraw: Number(totals.rows[0].draw),
-                playerMeron: Number(totals.rows[0].meron), // temporary (or separate query)
-                playerWala: Number(totals.rows[0].wala),
-                stream_enabled: game.stream_enabled
+            const bets = {
+                meron: betsList.rows.filter(b => b.side === 'MERON'),
+                wala: betsList.rows.filter(b => b.side === 'WALA')
             };
+
+            broadcast("STATE_UPDATE", {
+                game: gameState,
+                bets
+            });
+            
 
             const bets = {
                 meron: betsList.rows.filter(b => b.side === 'MERON'),
