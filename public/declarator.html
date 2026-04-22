@@ -342,16 +342,21 @@ button:disabled {
             console.log("WS message:", msg);
 
             switch (msg.type) {
-                case "game":
-                    updateGameUI(msg.data);
+                case "STATE_UPDATE":
+                    if (msg.payload?.game) {
+                        updateGameUI(msg.payload.game);
+                    }
+
+                    if (msg.payload?.bets) {
+                        renderBets(msg.payload.bets);
+                    }
+
                     break;
 
-                case "bets":
-                    renderBets(msg.data);
-                    break;
-
-                case "event":
-                    updateEventUI(msg.data);
+                case "EVENT_UPDATE":
+                    updateEventUI({
+                        announcement: msg.announcement
+                    });
                     break;
 
                 case "balance":
