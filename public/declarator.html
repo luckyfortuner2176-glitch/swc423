@@ -877,29 +877,7 @@ button:disabled {
     async function loadFast() {
         await loadBets();
     }
-    let realtimeInterval = null;
-
-    function startRealtime() {
-        if (realtimeInterval) return; // ✅ prevent duplicates
-
-        let tick = 0;
-
-        realtimeInterval = setInterval(async () => {
-            await fetchGame();
-
-            // ✅ fetch event every 3 seconds only
-            if (tick % 3 === 0) {
-                await fetchEvent();
-            }
-
-            // ✅ only load bets when needed
-            if (game.status === 'OPEN') {
-                await loadBets();
-            }
-
-            tick++;
-        }, 1000);
-    }
+    
     //Code for logout
     async function logout() {
         try {
@@ -920,7 +898,7 @@ button:disabled {
             showSnackbar("Logout failed", "error");
         }
     }
-    startRealtime();
+    
     // initial
     loadCore();
     loadFast();
