@@ -347,7 +347,7 @@ button:disabled {
                     break;
 
                 case "bets":
-                    loadBets(); // or renderBets(msg.data)
+                    renderBets(msg.data);
                     break;
 
                 case "event":
@@ -357,6 +357,14 @@ button:disabled {
                 case "balance":
                     fetchBalance();
                     break;
+                case "bet_result":
+                    if (msg.success) {
+                        showSnackbar("Bet placed!");
+                        document.getElementById('betAmount').value = '';
+                    } else {
+                        showSnackbar(msg.error || "Bet failed", "error");
+                    }
+                    break;
             }
         };
 
@@ -364,6 +372,31 @@ button:disabled {
             console.log("WS Disconnected. Reconnecting...");
             setTimeout(connectWS, 2000);
         };
+    }
+    function renderBets(data){
+        const meronDiv = document.getElementById('meronList');
+        const walaDiv = document.getElementById('walaList');
+
+        meronDiv.innerHTML = '';
+        walaDiv.innerHTML = '';
+
+        data.meron.forEach(bet => {
+            meronDiv.innerHTML += `
+                <div class="bet-item">
+                    <span>${bet.username}</span>
+                    <span>${Number(bet.amount).toLocaleString()}</span>
+                </div>
+            `;
+        });
+
+        data.wala.forEach(bet => {
+            walaDiv.innerHTML += `
+                <div class="bet-item">
+                    <span>${bet.username}</span>
+                    <span>${Number(bet.amount).toLocaleString()}</span>
+                </div>
+            `;
+        });
     }
     function openStartModal(){
         document.getElementById('startModal').style.display='flex';
@@ -602,15 +635,11 @@ button:disabled {
     async function confirmBet(){
         
         try{
-            const res = await fetch('/api/place-bet',{
-                method:'POST',
-                credentials:'include',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({
-                    side: pendingBet.side,
-                    amount: pendingBet.amount
-                })
-            });
+            ws.send(JSON.stringify({
+                type: "place_bet",
+                side: pendingBet.side,
+                amount: pendingBet.amount
+            }));
             
             const data = await res.json();
             closeBetModal();
@@ -760,46 +789,30 @@ button:disabled {
         return JSON.stringify(data);
     }
 
-    async function loadBets() {
-        try {
-            const res = await fetch('/api/active-bets', { credentials:'include' });
-            const data = await res.json();
+    function renderBets(data){
+        const meronDiv = document.getElementById('meronList');
+        const walaDiv = document.getElementById('walaList');
 
-            const newHash = generateHash(data);
+        meronDiv.innerHTML = '';
+        walaDiv.innerHTML = '';
 
-            // ✅ Skip if no changes
-            if (newHash === lastHash) return;
+        data.meron.forEach(bet => {
+            meronDiv.innerHTML += `
+                <div class="bet-item">
+                    <span>${bet.username}</span>
+                    <span>${Number(bet.amount).toLocaleString()}</span>
+                </div>
+            `;
+        });
 
-            lastHash = newHash;
-
-            // ✅ RENDER UI (YOU REMOVED THIS BEFORE)
-            const meronDiv = document.getElementById('meronList');
-            const walaDiv = document.getElementById('walaList');
-
-            meronDiv.innerHTML = '';
-            walaDiv.innerHTML = '';
-
-            data.meron.forEach(bet => {
-                meronDiv.innerHTML += `
-                    <div class="bet-item">
-                        <span>${bet.username}</span>
-                        <span>${Number(bet.amount).toLocaleString()}</span>
-                    </div>
-                `;
-            });
-
-            data.wala.forEach(bet => {
-                walaDiv.innerHTML += `
-                    <div class="bet-item">
-                        <span>${bet.username}</span>
-                        <span>${Number(bet.amount).toLocaleString()}</span>
-                    </div>
-                `;
-            });
-
-        } catch (err) {
-            console.error(err);
-        }
+        data.wala.forEach(bet => {
+            walaDiv.innerHTML += `
+                <div class="bet-item">
+                    <span>${bet.username}</span>
+                    <span>${Number(bet.amount).toLocaleString()}</span>
+                </div>
+            `;
+        });
     }
     function updateControls(gameStatus, streamEnabled){
         const startBtn = document.getElementById('btnStart');
@@ -874,9 +887,7 @@ button:disabled {
         ]);
     }
 
-    async function loadFast() {
-        await loadBets();
-    }
+    
     
     //Code for logout
     async function logout() {
@@ -901,7 +912,7 @@ button:disabled {
     
     // initial
     loadCore();
-    loadFast();
+   
 
     
    
