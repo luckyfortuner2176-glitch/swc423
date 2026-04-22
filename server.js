@@ -937,7 +937,6 @@ app.post('/api/place-bet', isAuthenticated, async (req, res) => {
     try {
       const result = await placeBet(userId, side, Number(amount));
 
-      const result = await placeBet(userId, side, Number(amount));
 
       // 🔥 BUILD FULL STATE
       const gameState = await buildGameState(userId);
