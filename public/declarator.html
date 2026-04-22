@@ -605,34 +605,31 @@ button:disabled {
     let isPlacingBet = false;
 
     function confirmBet(){
-        if (isPlacingBet) return;
+        ws.on('message', async (message) => {
+  const data = JSON.parse(message);
 
-        try{
-            if (ws && ws.readyState === WebSocket.OPEN) {
+  if (data.type === 'place_bet') {
+    const userId = ws.userId; // or from session
 
-                isPlacingBet = true;
+        try {
+        await placeBet(userId, data.side, data.amount);
 
-                ws.send(JSON.stringify({
-                    type: "place_bet",
-                    side: pendingBet.side,
-                    amount: pendingBet.amount
-                }));
+        const gameState = await buildGameState(userId);
+        const bets = await buildBetList();
 
-                closeBetModal();
+        broadcast("STATE_UPDATE", {
+            game: gameState,
+            bets
+        });
 
-                setTimeout(() => {
-                    isPlacingBet = false;
-                }, 1000);
-
-            } else {
-                showSnackbar("Connection not ready", "error");
-            }
-
-        }catch(err){
-            isPlacingBet = false;
-            console.error(err);
-            showSnackbar("Bet failed", "error");
+        } catch (err) {
+        ws.send(JSON.stringify({
+            type: "ERROR",
+            message: err.message
+        }));
         }
+    }
+    });
     }
     async function fetchBalance(){
     try{
