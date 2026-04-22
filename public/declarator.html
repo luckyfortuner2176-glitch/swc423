@@ -330,15 +330,11 @@ button:disabled {
         ws.onopen = () => {
             console.log("WS Connected");
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: "place_bet",
-                    side: pendingBet.side,
-                    amount: pendingBet.amount
-                }));
-            } else {
-                showSnackbar("Connection not ready", "error");
-            }
+            ws.send(JSON.stringify({
+                type: "auth",
+                userId: userId,
+                role: userRole
+            }));
         };
 
         ws.onmessage = (event) => {
@@ -347,7 +343,7 @@ button:disabled {
 
             switch (msg.type) {
                 case "game":
-                    fetchGame(); // or updateGameUI(msg.data)
+                    updateGameUI(msg.data);
                     break;
 
                 case "bets":
@@ -355,12 +351,13 @@ button:disabled {
                     break;
 
                 case "event":
-                    fetchEvent(); // or updateEventUI(msg.data)
+                    updateEventUI(msg.data);
                     break;
 
                 case "balance":
                     fetchBalance();
                     break;
+
                 case "bet_result":
                     if (msg.success) {
                         showSnackbar("Bet placed!");
@@ -457,17 +454,17 @@ button:disabled {
                 .forEach(btn => btn.classList.remove('active'));
 
             // 🔥 ADD active to the clicked button
-            if(side === 'MERON'){
-                document.getElementById('btnMeronWin');
+           if (side === 'MERON') {
+                document.getElementById('btnMeronWin').classList.add('active');
             }
-            if(side === 'WALA'){
-                document.getElementById('btnWalaWin');
+            if (side === 'WALA') {
+                document.getElementById('btnWalaWin').classList.add('active');
             }
-            if(side === 'DRAW'){
-                document.getElementById('btnDrawWin');
+            if (side === 'DRAW') {
+                document.getElementById('btnDrawWin').classList.add('active');
             }
-            if(side === 'CANCELLED'){
-                document.getElementById('btnCancelWin');
+            if (side === 'CANCELLED') {
+                document.getElementById('btnCancelWin').classList.add('active');
             }
 
             // 🔥 YOUR EXISTING API CALL
@@ -542,60 +539,38 @@ button:disabled {
         document.getElementById('sidebar').classList.remove('active');
         document.getElementById('overlay').classList.remove('active');
     }
-    let payoutMeron = 0;
-    let payoutWala = 0;
-    
+       
 
-    async function fetchGame(){
-        try{
-            const res = await fetch('/api/game-status',{credentials:'include'});
-            const data = await res.json();
+    function updateGameUI(data){
+        if (!data) return;
 
-            setText('fightNumber', data.fightNumber);
-            setText('totalMeron', formatNumber(data.totalMeron));
-            setText('totalWala', formatNumber(data.totalWala));
-            setText('playerMeron', formatNumber(data.playerMeron));
-            setText('playerWala', formatNumber(data.playerWala));
-            
+        setText('fightNumber', data.fightNumber);
+        setText('totalMeron', formatNumber(data.totalMeron));
+        setText('totalWala', formatNumber(data.totalWala));
+        setText('playerMeron', formatNumber(data.playerMeron));
+        setText('playerWala', formatNumber(data.playerWala));
 
-            const totalPool =
-                data.totalMeron +
-                data.totalWala +
-                (data.totalDraw || 0);
+        const totalPool =
+            data.totalMeron +
+            data.totalWala +
+            (data.totalDraw || 0);
 
-            const CUT = 0.915; // 8.5% cut for the house
-            //const CUT = 0.935; // 5% cut for the house (for better player retention)
-            payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
-            payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+        const CUT = 0.915;
 
-            document.getElementById('payoutMeron').textContent = payoutMeron.toFixed(2);
-            document.getElementById('payoutWala').textContent = payoutWala.toFixed(2);
+        const payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
+        const payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
 
-            // ✅ FIX STATUS
-            const status = document.getElementById('betStatus');
-            status.textContent = data.status;
-            status.className = "status " + String(data.status).toUpperCase();
-            updateControls(data.status, data.stream_enabled);
-            // ✅ ENABLE DECLARE BUTTONS
-            const declareButtons = document.querySelectorAll('.declare-btn');
+        document.getElementById('payoutMeron').textContent = payoutMeron.toFixed(2);
+        document.getElementById('payoutWala').textContent = payoutWala.toFixed(2);
 
-            if (data.status === 'CLOSED') {
-                declareButtons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.style.opacity = 1;
-                    btn.style.pointerEvents = "auto";
-                });
-            } else {
-                declareButtons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = 0.5;
-                    btn.style.pointerEvents = "none"; // 🔥 THIS FIXES YOUR ISSUE
-                });
-            }
-            game = data;
-        }catch(e){
-            console.error(e);
-        }
+        // status
+        const status = document.getElementById('betStatus');
+        status.textContent = data.status;
+        status.className = "status " + String(data.status).toUpperCase();
+
+        updateControls(data.status, data.stream_enabled);
+
+        game = data;
     }
 
     function placeBet(side){
@@ -609,20 +584,46 @@ button:disabled {
             return showSnackbar("Enter valid amount");
         }
 
-        // ✅ OPEN CONFIRM MODAL INSTEAD
+        // ✅ ADD IT HERE
+        const balance = Number(
+            document.getElementById('balance').textContent.replace(/,/g, '')
+        );
+
+        if (amount > balance) {
+            return showSnackbar("Insufficient balance", "error");
+        }
+
+        // ✅ ONLY open modal if valid
         openBetModal(side.toUpperCase(), amount);
     }
-    function confirmBet(){
-        try{
-            ws.send(JSON.stringify({
-                type: "place_bet",
-                side: pendingBet.side,
-                amount: pendingBet.amount
-            }));
+    let isPlacingBet = false;
 
-            closeBetModal();
+    function confirmBet(){
+        if (isPlacingBet) return;
+
+        try{
+            if (ws && ws.readyState === WebSocket.OPEN) {
+
+                isPlacingBet = true;
+
+                ws.send(JSON.stringify({
+                    type: "place_bet",
+                    side: pendingBet.side,
+                    amount: pendingBet.amount
+                }));
+
+                closeBetModal();
+
+                setTimeout(() => {
+                    isPlacingBet = false;
+                }, 1000);
+
+            } else {
+                showSnackbar("Connection not ready", "error");
+            }
 
         }catch(err){
+            isPlacingBet = false;
             console.error(err);
             showSnackbar("Bet failed", "error");
         }
@@ -661,43 +662,34 @@ button:disabled {
     }
     // 📢 FETCH ACTIVE EVENT
     let currentVideo = "";
-    async function fetchEvent(){
-        try{
-            const res = await fetch('/api/active-event');
-            const data = await res.json();
+    function updateEventUI(data){
+        if (!data) return;
 
-            document.getElementById('eventHeader').textContent =
-                data.event_name || "NO EVENT";
+        document.getElementById('eventHeader').textContent =
+            data.event_name || "NO EVENT";
 
-            document.getElementById('announcementBar').textContent =
-                data.announcement || "Welcome Players";
+        document.getElementById('announcementBar').textContent =
+            data.announcement || "Welcome Players";
 
-            // ✅ HANDLE STREAM ON/OFF
-            if (data.stream_enabled === false) {
-                document.getElementById('videoFrame').style.display = "none";
-                return;
-            } else {
-                document.getElementById('videoFrame').style.display = "block";
+        // stream toggle
+        if (data.stream_enabled === false) {
+            document.getElementById('videoFrame').style.display = "none";
+            return;
+        } else {
+            document.getElementById('videoFrame').style.display = "block";
+        }
+
+        if (data.video_url) {
+            let url = data.video_url;
+
+            if (!url.includes("autoplay=1")) {
+                url += (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1";
             }
 
-            // ✅ UPDATE VIDEO ONLY IF CHANGED
-            if (data.video_url) {
-                let url = data.video_url;
-
-                // ✅ Ensure autoplay (fix iPhone interaction lag)
-                if (!url.includes("autoplay=1")) {
-                    url += (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1";
-                }
-
-                // ✅ Only update iframe if changed (prevents reload lag)
-                if (url !== currentVideo) {
-                    document.getElementById('videoFrame').src = url;
-                    currentVideo = url;
-                }
+            if (url !== currentVideo) {
+                document.getElementById('videoFrame').src = url;
+                currentVideo = url;
             }
-
-        }catch(err){
-            console.error(err);
         }
     }
     // 📢 SET GAME DETAILS (FOR NOW JUST EVENT NAME)
@@ -846,12 +838,7 @@ button:disabled {
         
     checkSession('declarator');
 
-    async function loadCore() {
-        await Promise.all([
-            fetchGame(),
-            fetchEvent()
-        ]);
-    }
+    
 
     
     
@@ -875,10 +862,20 @@ button:disabled {
             showSnackbar("Logout failed", "error");
         }
     }
-    
-    // initial
-    loadCore();
+    async function fetchGame() {
+        const res = await fetch('/api/game');
+        const data = await res.json();
+        updateGameUI(data);
+    }
+
+    async function fetchEvent() {
+        const res = await fetch('/api/event');
+        const data = await res.json();
+        updateEventUI(data);
+    }
    
+    fetchGame();
+    fetchEvent();
 
     
    
