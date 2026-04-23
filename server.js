@@ -755,10 +755,10 @@ app.get('/api/agents', isAuthenticated, async (req, res) => {
     let params = [];
 
     // ✅ ONLY restrict if NOT admin
-    if (currentUserRole !== 'admin') {
+    //if (currentUserRole == 'admin') {
       query += ` AND u.parent_id = $1`;
       params.push(currentUserId);
-    }
+    //}
 
     query += ` ORDER BY u.created_at DESC`;
 
