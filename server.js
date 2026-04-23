@@ -752,6 +752,7 @@ app.get('/api/agents', isAuthenticated, async (req, res) => {
       AND u.status NOT IN ('pending', 'rejected')
       AND u.parent_id = $1
     `;
+    
 
     let params = [];
 
