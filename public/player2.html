@@ -385,7 +385,7 @@
             case "STATE_UPDATE":
                 if (data.payload?.game) {
                     updateGameUI(data.payload.game);
-                    alert(JSON.stringify(data.payload.game, null, 2));
+                    //alert(JSON.stringify(data.payload.game, null, 2));
                 }
                 break;
 
@@ -645,13 +645,13 @@
                 (payoutWala).toFixed(2);
             document.getElementById('payoutDraw').textContent =
                 payoutDraw + "x";
-            const myMeron = Number(data.myMeron || 0);
+            /*const myMeron = Number(data.myMeron || 0);
             const myWala = Number(data.myWala || 0);
             const myDraw = Number(data.myDraw || 0);
 
             document.getElementById('myMeron').textContent = myMeron;
             document.getElementById('myWala').textContent = myWala;
-            document.getElementById('myDraw').textContent = myDraw;
+            document.getElementById('myDraw').textContent = myDraw;*/
 
             // ✅ Only update win if no manual input (prevents override)
             const currentInput = Number(document.getElementById('betAmount').value);
