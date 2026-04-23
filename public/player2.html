@@ -442,14 +442,14 @@
         document.getElementById('payoutDraw').textContent =
             payoutDraw + "x";
 
-        /* 🔥 My bets
+        // 🔥 My bets
         const myMeron = Number(data.myMeron || 0);
         const myWala = Number(data.myWala || 0);
         const myDraw = Number(data.myDraw || 0);
 
         document.getElementById('myMeron').textContent = myMeron;
         document.getElementById('myWala').textContent = myWala;
-        document.getElementById('myDraw').textContent = myDraw;*/
+        document.getElementById('myDraw').textContent = myDraw;
 
         // 🔥 Win calculations
         const currentInput = Number(document.getElementById('betAmount').value);
@@ -595,7 +595,7 @@
             }
 
             showSnackbar("Bet placed successfully!");
-
+            
             document.getElementById('betAmount').value = '';
             closeBetModal();
 
@@ -1139,7 +1139,7 @@
     checkSession('player');   
     fetchGame();
     checkPlayerBalance(); // ✅ initial load
-    setInterval(fetchActiveEvent, 3000);
+    //setInterval(fetchActiveEvent, 3000);
     fetchActiveEvent();
     fetchHistory();
     loadBeads();
@@ -1149,7 +1149,7 @@
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "keepalive" }));
         }
-    }, 20000);
+    }, 10000);
 </script>
 
 </body>
