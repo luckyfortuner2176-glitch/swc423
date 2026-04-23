@@ -512,15 +512,16 @@
                     checkPlayerBalance();
                     fetchHistory();
                     loadBeads();
-                    myBets = { meron: 0, wala: 0, draw: 0 };
-
-                    document.getElementById('myMeron').textContent = 0;
-                    document.getElementById('myWala').textContent = 0;
-                    document.getElementById('myDraw').textContent = 0;
-                    document.getElementById('winMeron').textContent = 0;
-                    document.getElementById('winWala').textContent = 0;
-                    document.getElementById('winDraw').textContent = 0;
+                    
                 }
+                myBets = { meron: 0, wala: 0, draw: 0 };
+
+                document.getElementById('myMeron').textContent = 0;
+                document.getElementById('myWala').textContent = 0;
+                document.getElementById('myDraw').textContent = 0;
+                document.getElementById('winMeron').textContent = 0;
+                document.getElementById('winWala').textContent = 0;
+                document.getElementById('winDraw').textContent = 0;
 
             } else {
                 document.querySelectorAll('.bet-btn').forEach(btn=>{
