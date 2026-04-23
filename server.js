@@ -1605,7 +1605,7 @@ app.get('/api/game-history', async (req, res) => {
 app.get('/api/beads-history', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT g.winner
+      SELECT g.winner, g.fight_number
       FROM games g
       JOIN active_event ae
         ON g.event_name = ae.event_name
@@ -1614,7 +1614,10 @@ app.get('/api/beads-history', async (req, res) => {
       LIMIT 200
     `);
 
-    const history = result.rows.map(r => r.winner);
+    const history = result.rows.map(r => ({
+      winner: r.winner,
+      fight_number: r.fight_number
+    }));
 
     const counts = {
       MERON: history.filter(x => x === 'MERON').length,
