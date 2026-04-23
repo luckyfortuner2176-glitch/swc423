@@ -385,6 +385,7 @@
             case "STATE_UPDATE":
                 if (data.payload?.game) {
                     updateGameUI(data.payload.game);
+                    alert(JSON.stringify(data.payload.game, null, 2));
                 }
                 break;
 
