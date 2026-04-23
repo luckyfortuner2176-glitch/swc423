@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://unpkg.com/@mux/mux-player"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Player - SWC888</title>
@@ -115,8 +115,8 @@
                 <!-- LEFT: VIDEO -->
                 <div class="video-section">
                     <div id="eventHeader" style="
-                        text-align:center;
-                        font-size:20px;
+                        text-align:left;
+                        font-size:12px;
                         font-weight:bold;
                         margin-bottom:10px;
                         color:#22c55e;
@@ -133,17 +133,7 @@
                             style="display:block;">
                         </iframe>
 
-                        <!-- VIDEO 2: MUX 
-                        <mux-player
-                            id="muxPlayer"
-                            stream-type="live"
-                            playback-id="jKiNggvBnTuBVYMfXQfOp02KEadwkWpVfnQBmb8yU2OM"
-                            low-latency="true"
-                            debug
-                            autoplay
-                            muted
-                            style="width:100%; height:100%; display:none;"
-                        ></mux-player>-->
+                        
 
                         <!-- SWITCH BUTTONS -->
                         <div style="
@@ -299,17 +289,251 @@
     let payoutWala = 0;
     let payoutDraw = 0;
     let lastStatus = null;
-    
+    let lastUIUpdate = 0;
     let prevTotals = {
         meron: 0,
         wala: 0,
         draw: 0,
         balance: 0
     };
+    let myBets = {
+        meron: 0,
+        wala: 0,
+        draw: 0
+    };
     let pendingBet = {
         side: null,
         amount: 0
     };
+    let ws = null;
+    let wsConnected = false;
+
+    function initWebSocket(){
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        console.log("⚠️ WS already connected");
+        return;
+    }
+
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`${protocol}://${location.host}`);
+
+        ws.onopen = () => {
+            console.log("✅ WS connected");
+            wsConnected = true;
+
+            ws.send(JSON.stringify({
+                type: "auth",
+                role: "player"
+            }));
+
+            startHeartbeat();
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            handleWSMessage(data);
+        };
+
+        ws.onclose = () => {
+            console.log("❌ WS disconnected. Reconnecting...");
+            wsConnected = false;
+
+            stopHeartbeat();
+
+            setTimeout(initWebSocket, 3000);
+        };
+
+        ws.onerror = (err) => {
+            console.error("WS Error:", err);
+            ws.close();
+        };
+    }
+    let heartbeatInterval = null;
+
+    function startHeartbeat(){
+        stopHeartbeat();
+
+        heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 25000); // every 25s
+    }
+
+    function stopHeartbeat(){
+        if (heartbeatInterval){
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+    }
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            console.log("👀 Tab active → reconnect WS");
+            initWebSocket();
+        }
+    });
+    function handleWSMessage(data){
+        console.log("📡 WS:", data);
+
+        switch(data.type){
+
+            case "STATE_UPDATE":
+                if (data.payload?.game) {
+                    updateGameUI(data.payload.game);
+                    //alert(JSON.stringify(data.payload.game, null, 2));
+                }
+                break;
+
+            case "EVENT_UPDATE":
+                document.getElementById('announcementBar').textContent =
+                    data.announcement || "";
+                break;
+
+            case "GAME_RESULT":
+                if (data.winner === "CANCELLED") {
+                    showSnackbar("Game cancelled", "warning");
+                } else {
+                    showSnackbar(`${data.payload.winner} WINS!`);
+                }
+
+                // ✅ ADD THIS
+                fetchMyResult();
+
+                break;
+        }
+    }
+    function updateGameUI(data){
+        game = data;
+
+        // ✅ Fight number
+        const fightEl = document.getElementById('fightNumber');
+        if (fightEl.textContent != data.fightNumber) {
+            fightEl.textContent = data.fightNumber;
+        }
+
+        // =========================
+        // 🔥 TOTALS (only if changed)
+        // =========================
+        if (data.totalMeron !== prevTotals.meron) {
+            animateValue('totalMeron', prevTotals.meron, data.totalMeron);
+            prevTotals.meron = data.totalMeron;
+        }
+
+        if (data.totalWala !== prevTotals.wala) {
+            animateValue('totalWala', prevTotals.wala, data.totalWala);
+            prevTotals.wala = data.totalWala;
+        }
+
+        if (data.totalDraw !== prevTotals.draw) {
+            animateValue('totalDraw', prevTotals.draw, data.totalDraw);
+            prevTotals.draw = data.totalDraw;
+        }
+
+        // =========================
+        // 💰 PAYOUT COMPUTATION
+        // =========================
+        const totalPool =
+            data.totalMeron +
+            data.totalWala +
+            (data.totalDraw || 0);
+
+        const CUT = 0.915;
+
+        payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
+        payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+
+        const DRAW_MULTIPLIER = 8;
+        payoutDraw = DRAW_MULTIPLIER;
+        document.getElementById('winMeron').textContent =
+            (myBets.meron * payoutMeron).toFixed(2);
+
+        document.getElementById('winWala').textContent =
+            (myBets.wala * payoutWala).toFixed(2);
+
+        document.getElementById('winDraw').textContent =
+            (myBets.draw * payoutDraw).toFixed(2);
+        // ✅ Update payout UI only if changed
+        const payoutMeronEl = document.getElementById('payoutMeron');
+        const payoutWalaEl = document.getElementById('payoutWala');
+        const payoutDrawEl = document.getElementById('payoutDraw');
+
+        const newMeronText = payoutMeron.toFixed(2);
+        const newWalaText = payoutWala.toFixed(2);
+        const newDrawText = payoutDraw + "x";
+
+        if (payoutMeronEl.textContent !== newMeronText) {
+            payoutMeronEl.textContent = newMeronText;
+        }
+
+        if (payoutWalaEl.textContent !== newWalaText) {
+            payoutWalaEl.textContent = newWalaText;
+        }
+
+        if (payoutDrawEl.textContent !== newDrawText) {
+            payoutDrawEl.textContent = newDrawText;
+        }
+
+        // =========================
+        // 🏆 WIN CALCULATION (based on CURRENT UI values)
+        // =========================
+        const myMeron = myBets.meron;
+        const myWala = myBets.wala;
+        const myDraw = myBets.draw;
+
+        const currentInput = Number(document.getElementById('betAmount').value);
+
+        
+
+        // =========================
+        // 🔄 STATUS HANDLING
+        // =========================
+        const statusEl = document.getElementById('betStatus');
+        const gameStatus = (data.status || "CLOSED").toUpperCase();
+
+        if (statusEl.textContent !== gameStatus) {
+            statusEl.textContent = gameStatus;
+            statusEl.className = "status " + gameStatus;
+        }
+
+        game.status = gameStatus;
+
+        updateControls(gameStatus, data.stream_enabled);
+
+        // =========================
+        // 🔥 STATUS CHANGE DETECTION
+        // =========================
+        if (gameStatus !== lastStatus){
+
+            if (gameStatus !== 'OPEN'){
+                disableBetting("Betting is " + gameStatus);
+
+                if (gameStatus === 'RESOLVED'){
+                    fetchMyResult();
+                    checkPlayerBalance();
+                    fetchHistory();
+                    loadBeads();
+                    myBets = { meron: 0, wala: 0, draw: 0 };
+
+                    document.getElementById('myMeron').textContent = 0;
+                    document.getElementById('myWala').textContent = 0;
+                    document.getElementById('myDraw').textContent = 0;
+                    document.getElementById('winMeron').textContent = 0;
+                    document.getElementById('winWala').textContent = 0;
+                    document.getElementById('winDraw').textContent = 0;
+                }
+
+            } else {
+                document.querySelectorAll('.bet-btn').forEach(btn=>{
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                });
+            }
+
+            lastStatus = gameStatus;
+
+            fetchActiveEvent();
+        }
+    }
     function formatNumber(num) {
         return Number(num || 0).toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -396,12 +620,24 @@
                 throw new Error(data.error || "Bet failed");
             }
 
-            showSnackbar("Bet placed successfully!");
+            // ✅ 🔥 INSTANT UI UPDATE
+            updateMyBetUI(pendingBet.side, pendingBet.amount);
 
+            // ✅ WS (optional)
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "place_bet",
+                    side: pendingBet.side,
+                    amount: pendingBet.amount
+                }));
+            }
+
+            showSnackbar("Bet placed successfully!");
+            
             document.getElementById('betAmount').value = '';
             closeBetModal();
 
-            // refresh UI
+            // optional refresh
             checkPlayerBalance();
 
         } catch (err) {
@@ -468,6 +704,7 @@
                 document.getElementById('winDraw').textContent =
                     (myDraw * payoutDraw).toFixed(2);
             }
+                    
 
             const status = document.getElementById('betStatus');
             const gameStatus = (data.status || "CLOSED").toUpperCase();
@@ -496,7 +733,7 @@
                     
                 }
                 lastStatus = data.status;
-                fetchEvent();
+                fetchActiveEvent();
             }
 
         }catch(e){
@@ -641,30 +878,14 @@
     // 📢 FETCH ACTIVE EVENT
     let currentVideo = "";
 
-    async function fetchEvent(){
-        try{
-            const res = await fetch('/api/active-event');
-            const data = await res.json();
-
-            console.log("ACTIVE EVENT:", data);
-
-            document.getElementById('eventHeader').textContent =
-                data.event_name || "NO EVENT";
-
-            document.getElementById('announcementBar').textContent =
-                data.announcement || "Welcome Players";
-
-            updateVideo(data); // ✅ ONLY THIS
-
-        }catch(err){
-            console.error(err);
-        }
-    }
+   
     // 📢 FETCH ACTIVE EVENT
     async function fetchActiveEvent(){
         try{
             const res = await fetch('/api/active-event');
             const data = await res.json();
+
+            console.log("ACTIVE EVENT:", data);
 
             document.getElementById('eventHeader').textContent =
                 data.event_name || "NO EVENT";
@@ -796,9 +1017,10 @@
                 }
 
                 container.appendChild(dot);
-                const plate = document.getElementById('beadPlate');
-                plate.scrollLeft = plate.scrollWidth;
+                
             }
+            const plate = document.getElementById('beadPlate');
+                plate.scrollLeft = plate.scrollWidth;
         });
     }
     async function loadBeads() {
@@ -883,17 +1105,13 @@
 
     function switchVideo(mode){
         const iframe = document.getElementById('videoFrame');
-        const mux = document.getElementById('muxPlayer');
+        
 
         currentMode = mode;
 
         if(mode === 1){
             iframe.style.display = "block";
-            mux.style.display = "none";
-        } else {
-            iframe.style.display = "none";
-            mux.style.display = "block";
-        }
+        } 
     }
 
     async function fetchMyResult(){
@@ -904,10 +1122,14 @@
 
             const data = await res.json();
 
+            console.log("MY RESULT:", data); // 🔥 ADD THIS
+
             if (data.result === "WIN") {
-                showSnackbar(`🎉 You won ₱${formatNumber(data.winAmount)}`);
+                showSnackbar(`🎉 You won.🎉`);
             } else if (data.result === "LOSE") {
                 showSnackbar("😢 You lost this round", "warning");
+            } else if (data.result === "NO_BET") {
+                console.log("No bet found");
             }
 
         } catch (err) {
@@ -937,15 +1159,55 @@
             showSnackbar("Logout failed", "error");
         }
    }
-    setInterval(fetchGame, 1000);
+   function updateMyBetUI(side, amount){
+        // ✅ Update memory (NO DOM READ)
+        if (side === 'MERON') myBets.meron += amount;
+        if (side === 'WALA') myBets.wala += amount;
+        if (side === 'DRAW') myBets.draw += amount;
+
+        // ✅ Update UI
+        document.getElementById('myMeron').textContent = myBets.meron;
+        document.getElementById('myWala').textContent = myBets.wala;
+        document.getElementById('myDraw').textContent = myBets.draw;
+
+        // ✅ Compute winnings
+        document.getElementById('winMeron').textContent =
+            (myBets.meron * payoutMeron).toFixed(2);
+
+        document.getElementById('winWala').textContent =
+            (myBets.wala * payoutWala).toFixed(2);
+
+        document.getElementById('winDraw').textContent =
+            (myBets.draw * payoutDraw).toFixed(2);
+
+        
+    }
+    function resetMyBets(){
+        myBets = {
+            meron: 0,
+            wala: 0,
+            draw: 0
+        };
+
+        // reset UI
+        document.getElementById('myMeron').textContent = 0;
+        document.getElementById('myWala').textContent = 0;
+        document.getElementById('myDraw').textContent = 0;
+
+        document.getElementById('winMeron').textContent = 0;
+        document.getElementById('winWala').textContent = 0;
+        document.getElementById('winDraw').textContent = 0;
+    }
     checkSession('player');   
     fetchGame();
     checkPlayerBalance(); // ✅ initial load
-    setInterval(fetchActiveEvent, 3000);
+    //setInterval(fetchActiveEvent, 3000);
     fetchActiveEvent();
     fetchHistory();
     loadBeads();
+    initWebSocket();
+    // 🔥 KEEP CONNECTION ALIVE (PREVENT DISCONNECT)
+   
 </script>
-
 </body>
 </html>
