@@ -112,7 +112,7 @@ const settleGame = async (gameId, winner) => {
       Number(totals.draw);
 
     //const CUT = 0.915;
-    const CUT = STANDARDCUT;
+    const CUT = parseFloat(process.env.STANDARDCUT);
 
     const payouts = {
       MERON: totals.meron ? (totalPool / totals.meron) * CUT : 0,
