@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://unpkg.com/@mux/mux-player"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Player - SWC888</title>
@@ -133,17 +133,7 @@
                             style="display:block;">
                         </iframe>
 
-                        <!-- VIDEO 2: MUX 
-                        <mux-player
-                            id="muxPlayer"
-                            stream-type="live"
-                            playback-id="jKiNggvBnTuBVYMfXQfOp02KEadwkWpVfnQBmb8yU2OM"
-                            low-latency="true"
-                            debug
-                            autoplay
-                            muted
-                            style="width:100%; height:100%; display:none;"
-                        ></mux-player>-->
+                        
 
                         <!-- SWITCH BUTTONS -->
                         <div style="
@@ -1105,17 +1095,13 @@
 
     function switchVideo(mode){
         const iframe = document.getElementById('videoFrame');
-        const mux = document.getElementById('muxPlayer');
+        
 
         currentMode = mode;
 
         if(mode === 1){
             iframe.style.display = "block";
-            mux.style.display = "none";
-        } else {
-            iframe.style.display = "none";
-            mux.style.display = "block";
-        }
+        } 
     }
 
     async function fetchMyResult(){
