@@ -1411,9 +1411,9 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
     const gameId = result.rows[0].id;
 
     // 🔥 VERY IMPORTANT (THIS WAS MISSING)
-    broadcast("GAME_RESULT", {
-      winner
-    });
+    await settleGame(gameId, winner);
+
+    broadcast("GAME_RESULT", { winner });
     const gameState = await buildGameState(req.session.user.id);
     const bets = await buildBetList();
 
@@ -1441,7 +1441,7 @@ app.post('/api/declare-winner', isAuthenticated, async (req, res) => {
       message: "Winner declared",
       game: result.rows[0]
     });
-    settleGame(gameId, winner).catch(err => console.error(err));
+    
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -1908,22 +1908,59 @@ app.post('/api/withdraw-points-player', isAuthenticated, async (req, res) => {
 // ==========================
 // MY RESULT API (TO SHOW WIN/LOSE STATUS AND WIN AMOUNT AFTER GAME IS RESOLVED)
 // ==========================
-app.get('/api/my-result', async (req, res) => {
-    const userId = req.session.userId;
+app.get('/api/my-result', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
 
-    const bet = await Bets.findOne({
-        userId,
-        gameId: currentGameId
-    });
+        const gameRes = await pool.query(`
+            SELECT id FROM games
+            ORDER BY created_at DESC
+            LIMIT 1
+        `);
 
-    if (!bet) {
-        return res.json({ result: "NO_BET" });
+        if (!gameRes.rows.length) {
+            return res.json({ result: "NO_GAME" });
+        }
+
+        const gameId = gameRes.rows[0].id;
+
+        const betRes = await pool.query(`
+            SELECT side, amount
+            FROM bets
+            WHERE user_id = $1 AND game_id = $2
+        `, [userId, gameId]);
+
+        if (!betRes.rows.length) {
+            return res.json({ result: "NO_BET" });
+        }
+
+        const bet = betRes.rows[0];
+
+        const gameResultRes = await pool.query(`
+            SELECT winner FROM games WHERE id = $1
+        `, [gameId]);
+
+        const winner = gameResultRes.rows[0].winner;
+
+        if (!winner) {
+            return res.json({ result: "PENDING" });
+        }
+
+        if (winner === "CANCELLED") {
+            return res.json({ result: "CANCELLED" });
+        }
+
+        const isWin = bet.side === winner;
+
+        res.json({
+            result: isWin ? "WIN" : "LOSE",
+            winAmount: isWin ? bet.amount : 0 // optional calc
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
     }
-
-    res.json({
-        result: bet.result, // WIN / LOSE
-        winAmount: bet.winAmount
-    });
 });
 // ==========================
 // COMMISSION SUMMARY API (SEARCHABLE BY EVENT NAME AND DATE RANGE)

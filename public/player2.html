@@ -390,43 +390,15 @@
                 break;
 
             case "GAME_RESULT":
-                // optional but nice UX
-                //alert("GAME_RESULT:\n" + JSON.stringify(data.payload.game, null, 2));
                 if (data.winner === "CANCELLED") {
                     showSnackbar("Game cancelled", "warning");
                 } else {
                     showSnackbar(`${data.winner} WINS!`);
-                    // 🔥 RETRY SYSTEM (better than single delay)
-                    let tries = 0;
-
-                    const interval = setInterval(async () => {
-                        tries++;
-
-                        const res = await fetch('/api/my-result', {
-                            credentials: 'include'
-                        });
-
-                        const result = await res.json();
-
-                        console.log("Retry result:", result);
-
-                        if (result.result === "WIN" || result.result === "LOSE") {
-
-                            if (result.result === "WIN") {
-                                showSnackbar(`🎉 You won ₱${formatNumber(result.winAmount)}`);
-                            } else {
-                                showSnackbar("😢 You lost this round", "warning");
-                            }
-
-                            clearInterval(interval);
-                        }
-
-                        if (tries >= 5) {
-                            clearInterval(interval);
-                        }
-
-                    }, 500);
                 }
+
+                // ✅ ADD THIS
+                fetchMyResult();
+
                 break;
         }
     }
