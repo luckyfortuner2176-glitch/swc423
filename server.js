@@ -750,9 +750,7 @@ app.get('/api/agents', isAuthenticated, async (req, res) => {
       LEFT JOIN users p ON u.parent_id = p.id
       WHERE u.role IN ('master_agent', 'sub_agent', 'agent')
       AND u.status NOT IN ('pending', 'rejected')
-      AND u.parent_id = $1
     `;
-    
 
     let params = [];
 
