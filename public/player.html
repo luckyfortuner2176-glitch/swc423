@@ -400,6 +400,14 @@
                 fetchMyResult();
 
                 break;
+            case "STREAM_TOGGLE":
+                handleStreamToggle(data.payload.enabled);
+                break;
+
+            // ✅ ADD THIS
+            case "VIDEO_UPDATE":
+                updateVideo(data.payload.video_url);
+                break;
         }
     }
     function updateGameUI(data){
@@ -918,12 +926,13 @@
             iframe.src = url;
         }
 
-        // ✅ HANDLE STREAM ON/OFF
-        if (data.stream_enabled === false) {
-            iframe.style.display = "none";
-        } else {
-            iframe.style.display = "block";
-        }
+    }
+    function handleStreamToggle(enabled) {
+        const iframe = document.getElementById("videoFrame");
+
+        if (!iframe) return;
+
+        iframe.style.display = enabled ? "block" : "none";
     }
     function animateValue(id, start, end) {
         document.getElementById(id).textContent = formatNumber(end);

@@ -1539,7 +1539,10 @@ app.post('/api/declarator/toggle-stream', isAuthenticated, async (req, res) => {
           updated_at = NOW()
       WHERE id = 1
     `, [enabled]);
-
+    // ✅ ADD THIS (CRITICAL)
+    broadcast("STREAM_TOGGLE", {
+      enabled
+    });
     res.json({ message: "Stream updated" });
 
   } catch (err) {
@@ -1564,7 +1567,9 @@ app.post('/api/declarator/set-video', isAuthenticated, async (req, res) => {
           updated_at = NOW()
       WHERE id = 1
     `, [video_url]);
-
+      broadcast("VIDEO_UPDATE", {
+        video_url
+      });
     res.json({ message: "Video updated" });
 
   } catch (err) {
