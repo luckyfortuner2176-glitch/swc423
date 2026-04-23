@@ -60,17 +60,17 @@ async function runWave(declaratorId) {
             intervalSpeed = randomRange(500, 2000);
 
             if (Math.random() < 0.5) {
-                minBet = 500;
-                maxBet = 5000;
+                minBet = 1500;
+                maxBet = 50000;
             } else {
-                minBet = 1000;
-                maxBet = 10000;
+                minBet = 5000;
+                maxBet = 20000;
             }
 
             // 💥 BIG SPIKE
             if (Math.random() < 0.2) {
-                minBet = 2000;
-                maxBet = 15000;
+                minBet = 20000;
+                maxBet = 150000;
             }
         }
 
