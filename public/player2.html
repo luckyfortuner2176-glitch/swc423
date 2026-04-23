@@ -401,7 +401,7 @@
 
             case "GAME_RESULT":
                 // optional but nice UX
-                alert("GAME_RESULT:\n" + JSON.stringify(data.payload.game, null, 2));
+                //alert("GAME_RESULT:\n" + JSON.stringify(data.payload.game, null, 2));
                 if (data.winner === "CANCELLED") {
                     showSnackbar("Game cancelled", "warning");
                 } else {
