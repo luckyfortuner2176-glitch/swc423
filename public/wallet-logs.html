@@ -158,8 +158,8 @@
                     row.innerHTML = `
                         <td>${new Date(tx.created_at).toLocaleString()}</td>
                         <td>${typeIcon} ${tx.type}</td>
-                        <td>${tx.amount}</td>
-                        <td>${tx.balance_after}</td>
+                        <td>${formatMoney(tx.amount)}</td>
+                        <td>${formatMoney(tx.balance_after)}</td>
                         <td>${tx.description}</td>
                     `;
 
