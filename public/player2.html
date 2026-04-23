@@ -683,7 +683,7 @@
                 (payoutWala).toFixed(2);
             document.getElementById('payoutDraw').textContent =
                 payoutDraw + "x";
-            /*const myMeron = Number(data.myMeron || 0);
+            const myMeron = Number(data.myMeron || 0);
             const myWala = Number(data.myWala || 0);
             const myDraw = Number(data.myDraw || 0);
 
@@ -704,7 +704,7 @@
                 document.getElementById('winDraw').textContent =
                     (myDraw * payoutDraw).toFixed(2);
             }
-                    */
+                    
 
             const status = document.getElementById('betStatus');
             const gameStatus = (data.status || "CLOSED").toUpperCase();
