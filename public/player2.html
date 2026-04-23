@@ -310,44 +310,96 @@
         side: null,
         amount: 0
     };
-    let ws;
+    let ws = null;
+    let wsConnected = false;
 
     function initWebSocket(){
-        ws = new WebSocket(`ws://${location.host}`);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        console.log("⚠️ WS already connected");
+        return;
+    }
+
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`${protocol}://${location.host}`);
 
         ws.onopen = () => {
             console.log("✅ WS connected");
+            wsConnected = true;
+
+            ws.send(JSON.stringify({
+                type: "auth",
+                role: "player"
+            }));
+
+            startHeartbeat();
         };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-
-            // 🔥 We will handle events gradually
             handleWSMessage(data);
         };
 
         ws.onclose = () => {
             console.log("❌ WS disconnected. Reconnecting...");
-            setTimeout(initWebSocket, 2000);
+            wsConnected = false;
+
+            stopHeartbeat();
+
+            setTimeout(initWebSocket, 3000);
+        };
+
+        ws.onerror = (err) => {
+            console.error("WS Error:", err);
+            ws.close();
         };
     }
+    let heartbeatInterval = null;
+
+    function startHeartbeat(){
+        stopHeartbeat();
+
+        heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 25000); // every 25s
+    }
+
+    function stopHeartbeat(){
+        if (heartbeatInterval){
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+    }
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            console.log("👀 Tab active → reconnect WS");
+            initWebSocket();
+        }
+    });
     function handleWSMessage(data){
+        console.log("📡 WS:", data);
+
         switch(data.type){
 
-            case "game_update":
-                updateGameUI(data.payload);
+            case "STATE_UPDATE":
+                if (data.payload?.game) {
+                    updateGameUI(data.payload.game);
+                }
                 break;
 
-            case "balance_update":
-                updateBalanceUI(data.balance);
+            case "EVENT_UPDATE":
+                document.getElementById('announcementBar').textContent =
+                    data.announcement || "";
                 break;
 
-            case "bet_confirmed":
-                showSnackbar("Bet placed successfully!");
-                break;
-
-            case "error":
-                showSnackbar(data.message, "error");
+            case "GAME_RESULT":
+                // optional but nice UX
+                if (data.winner === "CANCELLED") {
+                    showSnackbar("Game cancelled", "warning");
+                } else {
+                    showSnackbar(`${data.winner} WINS!`);
+                }
                 break;
         }
     }
@@ -356,6 +408,7 @@
 
         document.getElementById('fightNumber').textContent = data.fightNumber;
 
+        // 🔥 Animate totals
         animateValue('totalMeron', prevTotals.meron, data.totalMeron);
         prevTotals.meron = data.totalMeron;
 
@@ -365,7 +418,88 @@
         animateValue('totalDraw', prevTotals.draw, data.totalDraw);
         prevTotals.draw = data.totalDraw;
 
-        // payout logic stays SAME
+        // 🔥 Compute payouts (same logic as fetchGame)
+        const totalPool =
+            data.totalMeron +
+            data.totalWala +
+            (data.totalDraw || 0);
+
+        const CUT = 0.915;
+
+        payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
+        payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
+
+        const DRAW_MULTIPLIER = 8;
+        payoutDraw = DRAW_MULTIPLIER;
+
+        document.getElementById('payoutMeron').textContent =
+            payoutMeron.toFixed(2);
+
+        document.getElementById('payoutWala').textContent =
+            payoutWala.toFixed(2);
+
+        document.getElementById('payoutDraw').textContent =
+            payoutDraw + "x";
+
+        // 🔥 My bets
+        const myMeron = Number(data.myMeron || 0);
+        const myWala = Number(data.myWala || 0);
+        const myDraw = Number(data.myDraw || 0);
+
+        document.getElementById('myMeron').textContent = myMeron;
+        document.getElementById('myWala').textContent = myWala;
+        document.getElementById('myDraw').textContent = myDraw;
+
+        // 🔥 Win calculations
+        const currentInput = Number(document.getElementById('betAmount').value);
+
+        if (!currentInput){
+            document.getElementById('winMeron').textContent =
+                (myMeron * payoutMeron).toFixed(2);
+
+            document.getElementById('winWala').textContent =
+                (myWala * payoutWala).toFixed(2);
+
+            document.getElementById('winDraw').textContent =
+                (myDraw * payoutDraw).toFixed(2);
+        }
+
+        // 🔥 Status handling
+        const statusEl = document.getElementById('betStatus');
+        const gameStatus = (data.status || "CLOSED").toUpperCase();
+
+        statusEl.textContent = gameStatus;
+        statusEl.className = "status " + gameStatus;
+
+        game.status = gameStatus;
+
+        updateControls(gameStatus, data.stream_enabled);
+
+        // 🔥 Detect status change
+        if (gameStatus !== lastStatus){
+
+            if (gameStatus !== 'OPEN'){
+                disableBetting("Betting is " + gameStatus);
+
+                if (gameStatus === 'RESOLVED'){
+                    fetchMyResult();
+                    checkPlayerBalance();
+                    fetchHistory();
+                    loadBeads();
+                }
+
+            } else {
+                document.querySelectorAll('.bet-btn').forEach(btn=>{
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                });
+            }
+
+            lastStatus = gameStatus;
+
+            // 🔥 Refresh event info
+            fetchEvent();
+        }
     }
     function formatNumber(num) {
         return Number(num || 0).toLocaleString(undefined, {
@@ -1000,7 +1134,7 @@
             showSnackbar("Logout failed", "error");
         }
    }
-    setInterval(fetchGame, 5000);
+    //setInterval(fetchGame, 5000);
     checkSession('player');   
     fetchGame();
     checkPlayerBalance(); // ✅ initial load
@@ -1009,6 +1143,12 @@
     fetchHistory();
     loadBeads();
     initWebSocket();
+    // 🔥 KEEP CONNECTION ALIVE (PREVENT DISCONNECT)
+    setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "keepalive" }));
+        }
+    }, 20000);
 </script>
 
 </body>
