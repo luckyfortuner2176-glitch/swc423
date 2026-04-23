@@ -92,7 +92,12 @@
                 window.location.href = '/';
             }
         }
-
+        function formatMoney(num){
+            return Number(num || 0).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -151,9 +156,9 @@
                     row.innerHTML = `
                         <td>${new Date(tx.created_at).toLocaleString()}</td>
                         <td>${typeIcon} ${tx.type}</td>
-                        <td>${tx.amount}</td>
-                        <td>${tx.balance_after}</td>
-                        <td>${tx.description}</td>
+                        <td>${formatMoney(tx.amount)}</td>
+                        <td>${formatMoney(tx.balance_after)}</td>
+                        <td>${formatDescription(tx.description)}</td>
                     `;
 
                     tbody.appendChild(row);
@@ -230,6 +235,24 @@
                 console.error(err);
                 showSnackbar("Logout failed", "error");
             }
+        }
+        function formatDescription(desc){
+            if (!desc) return "";
+
+            // Example: if desc is game ID like "123"
+            if (!isNaN(desc)) {
+                return "Game #" + desc;
+            }
+
+            // If your backend sends something like "game_id:123"
+            if (desc.includes("game")) {
+                const match = desc.match(/\d+/);
+                if (match) {
+                    return "Game #" + match[0];
+                }
+            }
+
+            return desc; // fallback
         }
         checkSession();
         loadWalletLogs();
