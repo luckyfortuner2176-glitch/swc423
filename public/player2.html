@@ -437,7 +437,7 @@
             data.totalWala +
             (data.totalDraw || 0);
 
-        const CUT = parseFloat(process.env.STANDARDCUT);
+        const CUT = 0.917;
 
         payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
         payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
@@ -669,7 +669,7 @@
                 data.totalWala +
                 (data.totalDraw || 0);
 
-            const CUT = parseFloat(process.env.STANDARDCUT);
+            const CUT = 0.917;
             //const CUT = 0.935; // 5% cut for the house (for better player retention)
             // avoid divide-by-zero
             payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
