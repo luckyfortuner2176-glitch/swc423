@@ -84,6 +84,56 @@
 .wala { background: blue; }
 .draw { background: green; }
 .cancelled { background: gray; }
+/* 🔥 GLOBAL FIX */
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* LAYOUT */
+.game-layout {
+    display: flex;
+    gap: 15px;
+}
+
+/* VIDEO + BETTING split (desktop) */
+.video-section {
+    flex: 2;
+}
+
+.betting-section {
+    flex: 1;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+
+    .game-layout {
+        flex-direction: column; /* 🔥 STACK */
+    }
+
+    .video-container {
+        aspect-ratio: 16 / 9;
+    }
+
+    .betting-section {
+        width: 100%;
+    }
+
+    .main {
+        padding: 10px;
+    }
+
+    .betting-card {
+        padding: 10px;
+    }
+
+    /* Fix chips overflow nicely */
+    .chips {
+        overflow-x: auto;
+    }
+}
 </style>
 </head>
 
@@ -1054,12 +1104,13 @@
 
         let number = 1;
 
-        history.forEach((result, index) => {
+        history.forEach((item) => {
             const bead = document.createElement('div');
 
-            bead.className = 'bead ' + result.toLowerCase();
+            bead.className = 'bead ' + item.winner.toLowerCase();
 
-            bead.innerText = item.fight_number; // ✅ NUMBER INSIDE
+            // ✅ USE ACTUAL FIGHT NUMBER
+            bead.innerText = item.fight_number;
 
             container.appendChild(bead);
         });
