@@ -34,10 +34,11 @@ const settleGame = async (gameId, winner) => {
   await pool.query('BEGIN');
 
   try {
-    // ❌ HANDLE CANCELLED (refund all + remove commissions)
+    // ==========================
+    // ❌ HANDLE CANCELLED
+    // ==========================
     if (winner === 'CANCELLED') {
 
-      // 1. REFUND ONLY UNRESOLVED BETS
       const bets = await pool.query(`
         SELECT id, user_id, amount 
         FROM bets 
@@ -64,14 +65,12 @@ const settleGame = async (gameId, winner) => {
         ]);
       }
 
-      // ✅ MARK BETS AS RESOLVED
       await pool.query(`
         UPDATE bets
         SET is_resolved = true
         WHERE game_id = $1 AND is_resolved = false
       `, [gameId]);
 
-      // ❌ REMOVE COMMISSIONS
       await pool.query(`
         DELETE FROM commission_transactions
         WHERE game_id = $1
@@ -82,10 +81,82 @@ const settleGame = async (gameId, winner) => {
     }
 
     // ==========================
-    // NORMAL SETTLEMENT
+    // 🔥 HANDLE DRAW (NEW LOGIC)
+    // ==========================
+    if (winner === 'DRAW') {
+
+      const bets = await pool.query(`
+        SELECT id, user_id, side, amount
+        FROM bets
+        WHERE game_id = $1 AND is_resolved = false
+      `, [gameId]);
+
+      for (const bet of bets.rows) {
+
+        if (bet.side === 'DRAW') {
+          // ✅ DRAW WINS 8x
+          const winAmount = bet.amount * 8;
+
+          await pool.query(`
+            UPDATE users
+            SET points = points + $1
+            WHERE id = $2
+          `, [winAmount, bet.user_id]);
+
+          await pool.query(`
+            INSERT INTO wallet_transactions
+            (user_id, type, amount, balance_after, description)
+            VALUES ($1, 'credit', $2,
+              (SELECT points FROM users WHERE id=$1),
+              $3)
+          `, [
+            bet.user_id,
+            winAmount,
+            `Win - DRAW`
+          ]);
+
+        } else {
+          // ✅ REFUND MERON/WALA
+          await pool.query(`
+            UPDATE users
+            SET points = points + $1
+            WHERE id = $2
+          `, [bet.amount, bet.user_id]);
+
+          await pool.query(`
+            INSERT INTO wallet_transactions
+            (user_id, type, amount, balance_after, description)
+            VALUES ($1, 'credit', $2,
+              (SELECT points FROM users WHERE id=$1),
+              $3)
+          `, [
+            bet.user_id,
+            bet.amount,
+            `Refund - DRAW`
+          ]);
+        }
+      }
+
+      await pool.query(`
+        UPDATE bets
+        SET is_resolved = true
+        WHERE game_id = $1 AND is_resolved = false
+      `, [gameId]);
+
+      // optional: remove commissions (same as cancelled)
+      await pool.query(`
+        DELETE FROM commission_transactions
+        WHERE game_id = $1
+      `, [gameId]);
+
+      await pool.query('COMMIT');
+      return;
+    }
+
+    // ==========================
+    // ✅ NORMAL SETTLEMENT (UNCHANGED)
     // ==========================
 
-    // 1. GET UNRESOLVED BETS
     const betsRes = await pool.query(`
       SELECT user_id, side, amount
       FROM bets
@@ -94,7 +165,6 @@ const settleGame = async (gameId, winner) => {
 
     const bets = betsRes.rows;
 
-    // 2. GET TOTAL POOLS (ONLY UNRESOLVED)
     const totalsRes = await pool.query(`
       SELECT
         COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS meron,
@@ -111,8 +181,8 @@ const settleGame = async (gameId, winner) => {
       Number(totals.wala) +
       Number(totals.draw);
 
-    //const CUT = 0.915;
-    const CUT = parseFloat(process.env.STANDARDCUT);
+    //const CUT = parseFloat(process.env.STANDARDCUT);
+    const CUT = 0.917;
 
     const payouts = {
       MERON: totals.meron ? (totalPool / totals.meron) * CUT : 0,
@@ -120,13 +190,11 @@ const settleGame = async (gameId, winner) => {
       DRAW: 8
     };
 
-    // ❌ SAFETY: no winners
     if (!payouts[winner]) {
       await pool.query('ROLLBACK');
       return;
     }
 
-    // 3. PAY WINNERS
     for (const bet of bets) {
       if (bet.side !== winner) continue;
 
@@ -151,7 +219,6 @@ const settleGame = async (gameId, winner) => {
       ]);
     }
 
-    // ✅ MARK ALL BETS AS RESOLVED (VERY IMPORTANT)
     await pool.query(`
       UPDATE bets
       SET is_resolved = true
