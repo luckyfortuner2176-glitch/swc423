@@ -557,8 +557,8 @@ button:disabled {
         setText('playerWala', formatNumber(data.playerWala));
 
         const totalPool =
-      Number(totals.meron) +
-      Number(totals.wala);
+            data.totalMeron +
+            data.totalWala;
 
     // 🎯 TARGET AVERAGE ODDS
         const TARGET_AVG = 1.83;
@@ -566,14 +566,13 @@ button:disabled {
         // 🧠 DYNAMIC CUT
         let CUT = 0;
 
-        if (Number(totals.meron) > 0 && Number(totals.wala) > 0) {
-            CUT = (2 * TARGET_AVG * Number(totals.meron) * Number(totals.wala)) / ((Number(totals.meron) + Number(totals.wala)) ** 2);
+        if (Number(data.totalMeron) > 0 && data.totalWala > 0) {
+            CUT = (2 * TARGET_AVG * Number(data.totalMeron) * data.totalWala) / ((data.totalMeron + data.totalWala) ** 2);
         }
 
         // ⚠️ OPTIONAL: only minimum protection (no max as requested)
         const MIN_CUT = 0.70;
         CUT = Math.max(MIN_CUT, CUT);
-        
 
         const payoutMeron = data.totalMeron ? (totalPool / data.totalMeron) * CUT : 0;
         const payoutWala = data.totalWala ? (totalPool / data.totalWala) * CUT : 0;
