@@ -50,49 +50,28 @@
         <!-- CONTENT -->
         <div class="content">
             <div id="snackbar"></div>
+             
+
+            <!-- Membership Link Card -->
+                <div class="card membership-card">
+                    <div class="card-content">
+                        <h3>PLEASE TAKE NOT OF YOUR REFFERAL LINK BELOW, ALL PLAYERS THAT WILL REGISTER UNDER THIS LINK WILL AUTOMATICALLY BE UNDER YOUR ACCOUNT.</h3>
+                        <div class="link-wrapper">
+                            <input class="membership-link" type="text" value="" readonly>
+                        </div>
+                        <button onclick="copyLink()">COPY YOUR LINK</button>
+                    </div>
+                    
+                </div>
 
                 <!-- Dashboard Cards -->
                 <div class="cards-container">
-                    <!-- Agent Account Summary -->
-                    <div class="card agents-card">
-                        <div class="card-content">
-                            <h3>Agents Summary</h3>
-                            <p class="amount">0 Agents</p>
-                            <span class="badge blue">0</span>Online Agents<br>
-                            <span class="badge red">0</span>Offline Agents<br>
-                            <span class="badge yellow">0</span>Pending Agents
-                        </div>
-                        <div class="card-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
-                                <circle cx="8" cy="8" r="3"/>
-                                <circle cx="16" cy="8" r="3"/>
-                                <path d="M2 20c0-3 4-4 6-4s6 1 6 4M10 20c0-3 4-4 6-4s6 1 6 4" fill="none" stroke="#2b2b2b" stroke-width="2"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <!-- Player Account Summary -->
-                    <div class="card players-card">
-                        <div class="card-content">
-                            <h3>Players' Summary</h3>
-                            <p class="amount">0 Players</p>
-                            <span class="badge blue">0</span>Online Players<br>
-                            <span class="badge red">0</span>Offline Players<br>
-                            <span class="badge grey">0</span>Pending Players
-                        </div>
-                        <div class="card-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
-                                <circle cx="12" cy="6" r="3"/>
-                                <path d="M4 20c0-4 8-4 8-4s8 0 8 4" fill="none" stroke="#2b2b2b" stroke-width="2"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <!-- Game Points Flow -->
+
+                    <!-- Wallet Balance -->
                     <div class="card wallet-card">
                         <div class="card-content">
-                            <h3>Game Points Flow</h3>
+                            <h3>Wallet Balance</h3>
                             <p class="amount">0.00</p>
-                            <span class="badge blue">0</span>Players Bet<br>
-                            <span class="badge yellow">0</span>Won Points<br>
                         </div>
                         <div class="card-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
@@ -102,13 +81,12 @@
                         </div>
                     </div>
 
-                    <!-- Points Flow -->
+                    <!-- Commission Earnings -->
                     <div class="card commission-card">
                         <div class="card-content">
-                            <h3>Agent-Player Points Flow</h3>
+                            <h3>Commission Earnings</h3>
                             <p class="amount">0 Points</p>
-                            <span class="badge red">0</span>Player Cash-In<br>
-                            <span class="badge yellow">0</span>Player Withdrawals
+                            <span class="rate-box">0%</span>Commision Rate
                         </div>
                         <div class="card-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
@@ -118,25 +96,39 @@
                         </div>
                     </div>
 
-                    
-
-                    
-
-                </div>
-
-            </div>
-            <!-- 🔒 SUPERADMIN SECURITY MODAL -->
-            <div id="securityModal" class="modal" style="display:flex;">
-                <div class="modal-content">
-                    <h3>🔒 System Security Check</h3>
-                    <p>Enter system password to continue</p>
-
-                    <input type="password" id="systemPassword" placeholder="Enter system password" />
-
-                    <div style="margin-top:10px;">
-                        <button onclick="verifySystemPassword()">VERIFY</button>
+                    <!-- Agents' Wallet -->
+                    <div class="card agents-card">
+                        <div class="card-content">
+                            <h3>Agents' Wallet</h3>
+                            <p class="amount">0 Points</p>
+                            <span class="badge blue">0</span>Agents
+                        </div>
+                        <div class="card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
+                                <circle cx="8" cy="8" r="3"/>
+                                <circle cx="16" cy="8" r="3"/>
+                                <path d="M2 20c0-3 4-4 6-4s6 1 6 4M10 20c0-3 4-4 6-4s6 1 6 4" fill="none" stroke="#2b2b2b" stroke-width="2"/>
+                            </svg>
+                        </div>
                     </div>
+
+                    <!-- Players' Wallet -->
+                    <div class="card players-card">
+                        <div class="card-content">
+                            <h3>Players' Wallet</h3>
+                            <p class="amount">0 Points</p>
+                            <span class="badge red">0</span>Players
+                        </div>
+                        <div class="card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="white">
+                                <circle cx="12" cy="6" r="3"/>
+                                <path d="M4 20c0-4 8-4 8-4s8 0 8 4" fill="none" stroke="#2b2b2b" stroke-width="2"/>
+                            </svg>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
 
         <!-- FOOTER -->
@@ -148,7 +140,6 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        let isVerified = false;
         function formatNumber(num) {
             return Number(num || 0).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -171,21 +162,21 @@
 
                 const data = await res.json();
 
+                // ❗ ONLY SUPERADMIN ALLOWED
                 if (data.role !== '-1') {
-                    window.location.href = '/';
+                    window.location.href = '/'; // or admin.html
                     return;
                 }
 
                 document.querySelectorAll('.username')
                     .forEach(el => el.textContent = data.username);
 
-                // 🚫 DO NOT load dashboard yet
-                // wait for password verification
-
             } catch (err) {
                 console.error(err);
                 window.location.href = '/';
             }
+            loadPendingCount();
+            loadWithdrawCount();
         }
         
         // =========================
@@ -379,43 +370,6 @@
             } catch (err) {
                 console.error(err);
                 showSnackbar("Logout failed", "error");
-            }
-        }
-        async function verifySystemPassword(){
-            const password = document.getElementById('systemPassword').value;
-
-            if (!password) {
-                return showSnackbar("Enter system password", "warning");
-            }
-
-            try {
-                const res = await fetch('/api/verify-superadmin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ password })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(data.error || "Verification failed");
-                }
-
-                // ✅ SUCCESS → close modal
-                isVerified = true;
-                document.getElementById('securityModal').style.display = 'none';
-                showSnackbar("Access granted");
-                
-            } catch (err) {
-                console.error(err);
-
-                showSnackbar("Invalid system password", "error");
-
-                // ❌ FORCE LOGOUT
-                setTimeout(() => {
-                    window.location.href = "/api/logout";
-                }, 1000);
             }
         }
         // Call after session check
