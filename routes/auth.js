@@ -198,5 +198,31 @@ router.post('/change-password', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// ==========================
+// SUPERADMIN VERIFY
+// ==========================
+router.post('/verify-superadmin', isAuthenticated, async (req, res) => {
+  const { password } = req.body;
 
+  try {
+    // ✅ Only allow superadmin role
+    if (req.session.user.role !== '-1') {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // ✅ Compare with .env password
+    if (password !== process.env.SUPERADMINPASS) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    // ✅ Optional: store verified flag in session
+    req.session.superadminVerified = true;
+
+    res.json({ message: "Verified" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 module.exports = router;
