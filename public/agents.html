@@ -484,7 +484,8 @@
                         <td><p class="btn add">${a.username}</p></td>
                         <td>
                             <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
-                                onchange="handleAgentAction(this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0}, this)"   
+                                onchange="handleAgentAction(this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0}, this)">
+                                
                                 <option value="">⚙️ Select Action</option>
                                 <option value="load">➕ Load</option>
                                 <option value="withdraw_load">💸 Withdraw Load</option>
