@@ -76,8 +76,7 @@ const settleGame = async (gameId, winner) => {
 
     const totalPool =
       Number(totals.meron) +
-      Number(totals.wala) +
-      Number(totals.draw);
+      Number(totals.wala);
 
     const CUT = 0.955;
 
