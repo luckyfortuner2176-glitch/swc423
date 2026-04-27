@@ -653,7 +653,10 @@ body, html {
         if (amount > balance) {
             return showSnackbar("Insufficient balance", "error");
         }
-
+          // ✅ 🔥 DRAW LIMIT FIX
+        if (side.toLowerCase() === 'draw' && amount > 8000) {
+            return showSnackbar("Max bet for DRAW is 8,000", "warning");
+        }
         // ✅ STORE pending bet
         pendingBet.side = side.toUpperCase();
         pendingBet.amount = amount;

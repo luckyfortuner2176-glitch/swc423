@@ -1015,7 +1015,12 @@ app.post('/api/place-bet', isAuthenticated, async (req, res) => {
 
     const userId = req.session.user.id;
     const { side, amount } = req.body;
-
+    // inside your placeBet API
+    if (side === 'DRAW' && amount > 8000) {
+        return res.status(400).json({
+            error: "Max bet for DRAW is 8000"
+        });
+    }
     try {
       const result = await placeBet(userId, side, Number(amount));
 
