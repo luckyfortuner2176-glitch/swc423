@@ -31,190 +31,188 @@ const server = http.createServer(app);
 
 initWebSocket(server);
 const settleGame = async (gameId, winner) => {
-  await pool.query('BEGIN');
+  const client = await pool.connect();
 
   try {
-    // ❌ HANDLE CANCELLED (refund all + remove commissions)
+    await client.query('BEGIN');
+
+    // 🔒 Lock all bets for this game (prevents race conditions)
+    const betsRes = await client.query(`
+      SELECT id, user_id, side, amount
+      FROM bets
+      WHERE game_id = $1 AND is_resolved = false
+      FOR UPDATE
+    `, [gameId]);
+
+    const bets = betsRes.rows;
+
+    // ==========================
+    // ❌ CANCELLED GAME
+    // ==========================
     if (winner === 'CANCELLED') {
 
-      // 1. REFUND ONLY UNRESOLVED BETS
-      const bets = await pool.query(`
-        SELECT id, user_id, amount 
-        FROM bets 
-        WHERE game_id = $1 AND is_resolved = false
-      `, [gameId]);
-
-      for (const bet of bets.rows) {
-        await pool.query(`
+      for (const bet of bets) {
+        await client.query(`
           UPDATE users 
           SET points = points + $1 
           WHERE id = $2
         `, [bet.amount, bet.user_id]);
 
-        await pool.query(`
+        await client.query(`
           INSERT INTO wallet_transactions
           (user_id, type, amount, balance_after, description)
-          VALUES ($1, 'credit', $2,
+          VALUES (
+            $1,
+            'credit',
+            $2,
             (SELECT points FROM users WHERE id=$1),
-            $3)
-        `, [
-          bet.user_id,
-          bet.amount,
-          `Refund - Game Cancelled`
-        ]);
+            'Refund - Game Cancelled'
+          )
+        `, [bet.user_id, bet.amount]);
       }
 
-      // ✅ MARK BETS AS RESOLVED
-      await pool.query(`
+      // mark resolved
+      await client.query(`
         UPDATE bets
         SET is_resolved = true
         WHERE game_id = $1 AND is_resolved = false
       `, [gameId]);
 
-      // ❌ REMOVE COMMISSIONS
-      await pool.query(`
+      // remove commissions
+      await client.query(`
         DELETE FROM commission_transactions
         WHERE game_id = $1
       `, [gameId]);
 
-      if (bets.length === 0) {
-        await pool.query('COMMIT');
-        return;
-      }
+      await client.query('COMMIT');
+      return; // ✅ VERY IMPORTANT
     }
+
     // ==========================
-    // 🎯 DRAW LOGIC (SPECIAL CASE)
+    // 🎯 DRAW
     // ==========================
     if (winner === 'DRAW') {
 
-      const betsRes = await pool.query(`
-        SELECT user_id, side, amount
-        FROM bets
-        WHERE game_id = $1 AND is_resolved = false
-      `, [gameId]);
-
-      const bets = betsRes.rows;
-
       for (const bet of bets) {
-
-        let payoutAmount = 0;
-        let description = '';
+        let payoutAmount;
+        let description;
 
         if (bet.side === 'DRAW') {
-          // 🎯 DRAW wins 8x
           payoutAmount = Number((bet.amount * 8).toFixed(2));
           description = 'Win - DRAW (8x)';
         } else {
-          // 💸 MERON & WALA refunded
           payoutAmount = bet.amount;
-          description = 'Refund - DRAW result';
+          description = 'Refund - DRAW';
         }
 
-        await pool.query(`
+        await client.query(`
           UPDATE users
           SET points = points + $1
           WHERE id = $2
         `, [payoutAmount, bet.user_id]);
 
-        await pool.query(`
+        await client.query(`
           INSERT INTO wallet_transactions
           (user_id, type, amount, balance_after, description)
-          VALUES ($1, 'credit', $2,
+          VALUES (
+            $1,
+            'credit',
+            $2,
             (SELECT points FROM users WHERE id=$1),
-            $3)
-        `, [
-          bet.user_id,
-          payoutAmount,
-          description
-        ]);
+            $3
+          )
+        `, [bet.user_id, payoutAmount, description]);
       }
 
-      // ✅ mark resolved
-      await pool.query(`
+      await client.query(`
         UPDATE bets
         SET is_resolved = true
         WHERE game_id = $1 AND is_resolved = false
       `, [gameId]);
-      await pool.query(`
-      DELETE FROM commission_transactions
-      WHERE game_id = $1
-    `, [gameId]);
-      await pool.query('COMMIT');
+
+      await client.query(`
+        DELETE FROM commission_transactions
+        WHERE game_id = $1
+      `, [gameId]);
+
+      await client.query('COMMIT');
       return;
     }
+
     // ==========================
-    // NORMAL SETTLEMENT
+    // 🧠 NORMAL GAME
     // ==========================
 
-    // 1. GET UNRESOLVED BETS
-    const betsRes = await pool.query(`
-      SELECT user_id, side, amount
-      FROM bets
-      WHERE game_id = $1 AND is_resolved = false
-    `, [gameId]);
-
-    const bets = betsRes.rows;
-
-    // 2. GET TOTAL POOLS (ONLY UNRESOLVED)
-    const totalsRes = await pool.query(`
+    // totals
+    const totalsRes = await client.query(`
       SELECT
         COALESCE(SUM(CASE WHEN side='MERON' THEN amount END),0) AS meron,
-        COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS wala,
-        COALESCE(SUM(CASE WHEN side='DRAW' THEN amount END),0) AS draw
+        COALESCE(SUM(CASE WHEN side='WALA' THEN amount END),0) AS wala
       FROM bets
       WHERE game_id = $1 AND is_resolved = false
     `, [gameId]);
 
     const totals = totalsRes.rows[0];
 
-    const totalPool =
-      Number(totals.meron) +
-      Number(totals.wala);
+    const meron = Number(totals.meron);
+    const wala = Number(totals.wala);
 
-    // 🎯 TARGET AVERAGE ODDS
-        const TARGET_AVG = 1.83;
+    const totalPool = meron + wala;
 
-        // 🧠 DYNAMIC CUT
-        let CUT = 0;
-
-        if (Number(totals.meron) > 0 && Number(totals.wala) > 0) {
-            CUT = (2 * TARGET_AVG * Number(totals.meron) * Number(totals.wala)) / ((Number(totals.meron) + Number(totals.wala)) ** 2);
-        }
-
-        // ⚠️ OPTIONAL: only minimum protection (no max as requested)
-        const MIN_CUT = 0.70;
-        CUT = Math.max(MIN_CUT, CUT);
-
-    const payouts = {
-      MERON: totals.meron ? (totalPool / totals.meron) * CUT : 0,
-      WALA: totals.wala ? (totalPool / totals.wala) * CUT : 0,
-      DRAW: 8
-    };
-
-    // ❌ SAFETY: no winners
-    if (!payouts[winner]) {
-      await pool.query('ROLLBACK');
+    // ❌ No bets at all
+    if (totalPool === 0) {
+      await client.query('COMMIT');
       return;
     }
-    
-    // 3. PAY WINNERS
+
+    // 🎯 TARGET ODDS
+    const TARGET_AVG = 1.83;
+
+    let CUT = 0;
+
+    if (meron > 0 && wala > 0) {
+      CUT = (2 * TARGET_AVG * meron * wala) / ((meron + wala) ** 2);
+    }
+
+    const MIN_CUT = 0.70;
+    CUT = Math.max(MIN_CUT, CUT);
+
+    const payouts = {
+      MERON: meron > 0 ? (totalPool / meron) * CUT : 0,
+      WALA: wala > 0 ? (totalPool / wala) * CUT : 0
+    };
+
+    // ❌ Invalid winner or no payout
+    if (!payouts[winner] || payouts[winner] <= 0) {
+      console.error('Invalid payout calculation:', payouts, 'Winner:', winner);
+      await client.query('ROLLBACK');
+      return;
+    }
+
+    // ==========================
+    // 💰 PAY WINNERS
+    // ==========================
     for (const bet of bets) {
       if (bet.side !== winner) continue;
 
       const winAmount = Number((bet.amount * payouts[winner]).toFixed(2));
 
-      await pool.query(`
+      await client.query(`
         UPDATE users
         SET points = points + $1
         WHERE id = $2
       `, [winAmount, bet.user_id]);
 
-      await pool.query(`
+      await client.query(`
         INSERT INTO wallet_transactions
         (user_id, type, amount, balance_after, description)
-        VALUES ($1, 'credit', $2,
+        VALUES (
+          $1,
+          'credit',
+          $2,
           (SELECT points FROM users WHERE id=$1),
-          $3)
+          $3
+        )
       `, [
         bet.user_id,
         winAmount,
@@ -222,18 +220,20 @@ const settleGame = async (gameId, winner) => {
       ]);
     }
 
-    // ✅ MARK ALL BETS AS RESOLVED (VERY IMPORTANT)
-    await pool.query(`
+    // ✅ mark resolved
+    await client.query(`
       UPDATE bets
       SET is_resolved = true
       WHERE game_id = $1 AND is_resolved = false
     `, [gameId]);
 
-    await pool.query('COMMIT');
+    await client.query('COMMIT');
 
   } catch (err) {
-    await pool.query('ROLLBACK');
+    await client.query('ROLLBACK');
     console.error('SETTLE GAME ERROR:', err);
+  } finally {
+    client.release();
   }
 };
 
