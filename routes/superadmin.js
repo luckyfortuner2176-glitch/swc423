@@ -10,6 +10,7 @@ function isSuperAdmin(req, res, next) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
+    // ✅ FIX HERE
     if (req.session.user.role !== '-1') {
         return res.status(403).json({ error: "Forbidden" });
     }
@@ -79,8 +80,8 @@ router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
         // ==========================
         const cash = await pool.query(`
             SELECT
-                COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS cash_in,
-                COALESCE(SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END), 0) AS withdraw
+                COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) AS cash_in,
+                COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) AS withdraw
             FROM wallet_transactions
         `);
 
