@@ -1,13 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/connection');
+
+// ==========================
+// ✅ ADD THIS (YOU ARE MISSING IT)
+// ==========================
+function isSuperAdmin(req, res, next) {
+    if (!req.session.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (req.session.user.role !== '-1') {
+        return res.status(403).json({ error: "Forbidden" });
+    }
+
+    next();
+}
+
+// ==========================
+// SUPERADMIN DASHBOARD
+// ==========================
 router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
     try {
         console.log("📊 Loading superadmin dashboard...");
 
-        // ==========================
-        // AGENTS
-        // ==========================
         const agents = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE role IN ('agent','sub_agent','master_agent')) AS total,
@@ -17,9 +33,6 @@ router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
             FROM users
         `);
 
-        // ==========================
-        // PLAYERS
-        // ==========================
         const players = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE role = 'player') AS total,
@@ -29,18 +42,12 @@ router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
             FROM users
         `);
 
-        // ==========================
-        // BETS
-        // ==========================
         const bets = await pool.query(`
             SELECT COALESCE(SUM(amount), 0) AS total_bet
             FROM bets
             WHERE is_dummy = false
         `);
 
-        // ==========================
-        // CASH FLOW
-        // ==========================
         const cash = await pool.query(`
             SELECT
                 COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) AS cash_in,
@@ -48,7 +55,6 @@ router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
             FROM wallet_transactions
         `);
 
-        // ✅ SINGLE CLEAN RESPONSE
         const response = {
             totalAgents: Number(agents.rows[0]?.total || 0),
             onlineAgents: Number(agents.rows[0]?.online || 0),
@@ -76,3 +82,6 @@ router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// ==========================
+module.exports = router;
