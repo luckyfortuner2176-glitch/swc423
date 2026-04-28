@@ -19,22 +19,18 @@ function isSuperAdmin(req, res, next) {
 // ✅ Route
 router.get('/dashboard', isSuperAdmin, async (req, res) => {
     try {
+        console.log("🔥 SUPERADMIN DASHBOARD HIT");
+
         const agents = await pool.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE role IN ('agent','sub_agent','master_agent')) AS total,
-                COUNT(*) FILTER (WHERE status = 'online' AND role IN ('agent','sub_agent','master_agent')) AS online,
-                COUNT(*) FILTER (WHERE status = 'offline' AND role IN ('agent','sub_agent','master_agent')) AS offline,
-                COUNT(*) FILTER (WHERE status = 'pending' AND role IN ('agent','sub_agent','master_agent')) AS pending
+            SELECT COUNT(*) AS total
             FROM users
+            WHERE role IN ('agent','sub_agent','master_agent')
         `);
 
         const players = await pool.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE role = 'player') AS total,
-                COUNT(*) FILTER (WHERE status = 'online' AND role = 'player') AS online,
-                COUNT(*) FILTER (WHERE status = 'offline' AND role = 'player') AS offline,
-                COUNT(*) FILTER (WHERE status = 'pending' AND role = 'player') AS pending
+            SELECT COUNT(*) AS total
             FROM users
+            WHERE role = 'player'
         `);
 
         const bets = await pool.query(`
@@ -51,25 +47,15 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         `);
 
         res.json({
-            totalAgents: Number(agents.rows[0].total),
-            onlineAgents: Number(agents.rows[0].online),
-            offlineAgents: Number(agents.rows[0].offline),
-            pendingAgents: Number(agents.rows[0].pending),
-
-            totalPlayers: Number(players.rows[0].total),
-            onlinePlayers: Number(players.rows[0].online),
-            offlinePlayers: Number(players.rows[0].offline),
-            pendingPlayers: Number(players.rows[0].pending),
-
-            totalBet: Number(bets.rows[0].total_bet),
-            totalWon: 0,
-
-            totalCashIn: Number(cash.rows[0].cash_in),
-            totalWithdraw: Number(cash.rows[0].withdraw)
+            totalAgents: Number(agents.rows[0]?.total || 0),
+            totalPlayers: Number(players.rows[0]?.total || 0),
+            totalBet: Number(bets.rows[0]?.total_bet || 0),
+            totalCashIn: Number(cash.rows[0]?.cash_in || 0),
+            totalWithdraw: Number(cash.rows[0]?.withdraw || 0)
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("❌ REAL ERROR:", err); // 👈 THIS IS WHAT YOU NEED
         res.status(500).json({ error: err.message });
     }
 });
