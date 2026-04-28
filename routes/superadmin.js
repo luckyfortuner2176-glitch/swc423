@@ -2,28 +2,23 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/connection');
 
-// ==========================
-// ✅ ADD THIS (YOU ARE MISSING IT)
-// ==========================
+// ✅ Middleware
 function isSuperAdmin(req, res, next) {
     if (!req.session.user) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (req.session.user.role !== '-1') {
+    // ⚠️ FIX: use string role consistently
+    if (req.session.user.role !== 'superadmin') {
         return res.status(403).json({ error: "Forbidden" });
     }
 
     next();
 }
 
-// ==========================
-// SUPERADMIN DASHBOARD
-// ==========================
+// ✅ Route
 router.get('/dashboard', isSuperAdmin, async (req, res) => {
     try {
-        console.log("📊 Loading superadmin dashboard...");
-
         const agents = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE role IN ('agent','sub_agent','master_agent')) AS total,
@@ -55,33 +50,28 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
             FROM wallet_transactions
         `);
 
-        const response = {
-            totalAgents: Number(agents.rows[0]?.total || 0),
-            onlineAgents: Number(agents.rows[0]?.online || 0),
-            offlineAgents: Number(agents.rows[0]?.offline || 0),
-            pendingAgents: Number(agents.rows[0]?.pending || 0),
+        res.json({
+            totalAgents: Number(agents.rows[0].total),
+            onlineAgents: Number(agents.rows[0].online),
+            offlineAgents: Number(agents.rows[0].offline),
+            pendingAgents: Number(agents.rows[0].pending),
 
-            totalPlayers: Number(players.rows[0]?.total || 0),
-            onlinePlayers: Number(players.rows[0]?.online || 0),
-            offlinePlayers: Number(players.rows[0]?.offline || 0),
-            pendingPlayers: Number(players.rows[0]?.pending || 0),
+            totalPlayers: Number(players.rows[0].total),
+            onlinePlayers: Number(players.rows[0].online),
+            offlinePlayers: Number(players.rows[0].offline),
+            pendingPlayers: Number(players.rows[0].pending),
 
-            totalBet: Number(bets.rows[0]?.total_bet || 0),
+            totalBet: Number(bets.rows[0].total_bet),
             totalWon: 0,
 
-            totalCashIn: Number(cash.rows[0]?.cash_in || 0),
-            totalWithdraw: Number(cash.rows[0]?.withdraw || 0)
-        };
-
-        console.log("✅ Dashboard Data:", response);
-
-        res.json(response);
+            totalCashIn: Number(cash.rows[0].cash_in),
+            totalWithdraw: Number(cash.rows[0].withdraw)
+        });
 
     } catch (err) {
-        console.error("❌ SUPERADMIN DASHBOARD ERROR:", err);
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ==========================
 module.exports = router;
