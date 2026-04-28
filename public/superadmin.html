@@ -125,19 +125,7 @@
                 </div>
 
             </div>
-            <!-- 🔒 SUPERADMIN SECURITY MODAL -->
-            <div id="securityModal" class="modal" style="display:flex;">
-                <div class="modal-content">
-                    <h3>🔒 System Security Check</h3>
-                    <p>Enter system password to continue</p>
-
-                    <input type="password" id="systemPassword" placeholder="Enter system password" />
-
-                    <div style="margin-top:10px;">
-                        <button onclick="verifySystemPassword()">VERIFY</button>
-                    </div>
-                </div>
-            </div>
+            
 
         <!-- FOOTER -->
         <footer>
@@ -171,7 +159,7 @@
 
                 const data = await res.json();
 
-                if (data.role !== '-1') {
+                if (data.role !== 'superadmin') {
                     window.location.href = '/';
                     return;
                 }
@@ -179,8 +167,8 @@
                 document.querySelectorAll('.username')
                     .forEach(el => el.textContent = data.username);
 
-                // 🚫 DO NOT load dashboard yet
-                // wait for password verification
+                // 🔥 LOAD IMMEDIATELY
+                await loadSuperAdminDashboard();
 
             } catch (err) {
                 console.error(err);
@@ -387,46 +375,7 @@
                 showSnackbar("Logout failed", "error");
             }
         }
-        async function verifySystemPassword(){
-            const password = document.getElementById('systemPassword').value;
-
-            if (!password) {
-                return showSnackbar("Enter system password", "warning");
-            }
-
-            try {
-                const res = await fetch('/api/verify-superadmin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ password })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(data.error || "Verification failed");
-                }
-
-                // ✅ SUCCESS → close modal
-                isVerified = true;
-                document.getElementById('securityModal').style.display = 'none';
-                showSnackbar("Access granted");
-
-                // 🔥 LOAD DATA ONLY AFTER VERIFICATION
-                await loadSuperAdminDashboard();
-                
-            } catch (err) {
-                console.error(err);
-
-                showSnackbar("Invalid system password", "error");
-
-                // ❌ FORCE LOGOUT
-                setTimeout(() => {
-                    window.location.href = "/api/logout";
-                }, 1000);
-            }
-        }
+        
         // Call after session check
         checkSession();
         
