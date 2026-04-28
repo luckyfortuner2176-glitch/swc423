@@ -562,12 +562,15 @@ button:active {
     background: #1e293b;
     padding: 20px;
     border-radius: 12px;
-    width: 90%;
-    max-width: 900px;   /* 🔥 bigger modal */
-    max-height: 80vh;   /* 🔥 prevent overflow */
-    overflow-y: auto;   /* 🔥 scroll inside modal */
+    width: 300px; /* default small */
 }
-
+/* NETWORK MODAL ONLY */
+#networkModal .modal-content {
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
 .action-dropdown {
     width: auto;
     min-width: 140px;   /* 🔥 bigger */
@@ -585,10 +588,12 @@ button:active {
     opacity: 0.4;
     pointer-events: none;
 }
-.styled-table th, .styled-table td {
-    white-space: nowrap;        /* Prevent text wrapping */
-    overflow: hidden;           /* Hide overflow */
-    text-overflow: ellipsis;    /* Add ... if content too long */
+/* Only apply truncation to specific tables if needed */
+.agents-table th, 
+.agents-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .styled-table .actions {
@@ -765,4 +770,57 @@ button:disabled {
 .earnings-green {
     color: #22c55e; /* green */
     font-weight: bold;
+}
+
+/* ==========================
+   NETWORK MODAL TABLE
+========================== */
+#networkContent table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#networkContent th {
+    background: #0f172a;
+    color: #14b8a6;
+    font-weight: 600;
+}
+
+#networkContent th,
+#networkContent td {
+    padding: 10px;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+    font-size: 14px;
+}
+
+#networkContent tr:hover {
+    background: rgba(20, 184, 166, 0.05);
+}
+
+#networkContent table {
+    min-width: 600px;
+}
+
+#networkModal button {
+    width: auto;
+    margin-top: 15px;
+    padding: 8px 16px;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    #networkContent table {
+        font-size: 12px;
+    }
+
+    #networkContent th,
+    #networkContent td {
+        padding: 8px;
+    }
 }
