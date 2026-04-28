@@ -27,7 +27,9 @@ const loginLimiter = rateLimit({
 });
 const http = require('http');
 const server = http.createServer(app);
+const superadminRoutes = require('./routes/superadmin');
 
+app.use('/api', superadminRoutes);
 
 initWebSocket(server);
 const settleGame = async (gameId, winner) => {
