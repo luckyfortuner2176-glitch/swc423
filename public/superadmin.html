@@ -342,16 +342,18 @@
                 e.preventDefault();
             }
         });
+        // ❌ DISABLE THIS FOR NOW
+        /*
         setInterval(() => {
             const threshold = 160;
             if (
                 window.outerWidth - window.innerWidth > threshold ||
                 window.outerHeight - window.innerHeight > threshold
             ) {
-                // optional: logout or redirect
                 window.location.href = "/api/logout";
             }
         }, 1000);
+        */  
         //Code for logout
         async function logout() {
             try {
