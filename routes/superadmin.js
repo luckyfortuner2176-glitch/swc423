@@ -20,7 +20,7 @@ function isSuperAdmin(req, res, next) {
 // ==========================
 // SUPERADMIN DASHBOARD
 // ==========================
-router.get('/superadmin/dashboard', isSuperAdmin, async (req, res) => {
+router.get('/dashboard', isSuperAdmin, async (req, res) => {
     try {
         console.log("📊 Loading superadmin dashboard...");
 
