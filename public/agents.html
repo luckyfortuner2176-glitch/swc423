@@ -437,7 +437,7 @@
                         <td><p class="btn add">${a.username}</p></td>
                         <td>
                             <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
-                                onchange="handleAgentAction(this, this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})"    
+                                onchange="handleAgentAction(this, this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})">
                                 <option value="">⚙️ Select Action</option>
                                 <option value="load">➕ Load</option>
                                 <option value="withdraw_load">💸 Withdraw Load</option>
@@ -633,6 +633,10 @@
         async function openNetwork(userId) {
             document.getElementById('networkModal').style.display = 'flex';
             const container = document.getElementById('networkContent');
+
+            // 👇 optional title update
+            document.querySelector('#networkModal h3').textContent = `Agent ${userId} Network`;
+
             container.innerHTML = 'Loading...';
 
             try {
@@ -656,18 +660,39 @@
                 return;
             }
 
-            let html = '<ul style="text-align:left;">';
+            let html = `
+                <table class="styled-table" style="width:100%; text-align:left;">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Points</th>
+                            <th>Status</th>
+                            <th>Parent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
             list.forEach(user => {
                 html += `
-                    <li>
-                        <strong>${user.username}</strong> 
-                        (${user.role}) - ${formatPHP(user.points)}
-                    </li>
+                    <tr>
+                        <td>${user.username}</td>
+                        <td>${formatRole(user.role)}</td>
+                        <td>${formatPHP(user.points || 0)}</td>
+                        <td class="status ${user.status}">
+                            ${user.status}
+                        </td>
+                        <td>${user.parent_username || '-'}</td>
+                    </tr>
                 `;
             });
 
-            html += '</ul>';
+            html += `
+                    </tbody>
+                </table>
+            `;
+
             container.innerHTML = html;
         }
         function closeNetworkModal() {
