@@ -18,9 +18,9 @@ function isSuperAdmin(req, res, next) {
 
 // ✅ Route
 router.get('/dashboard', isSuperAdmin, async (req, res) => {
-    try {
-        console.log("🔥 SUPERADMIN DASHBOARD HIT");
+    console.log("🔥 SUPERADMIN DASHBOARD HIT");
 
+    try {
         const agents = await pool.query(`
             SELECT COUNT(*) AS total
             FROM users
@@ -46,7 +46,7 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
             FROM wallet_transactions
         `);
 
-        res.json({
+        return res.json({
             totalAgents: Number(agents.rows[0]?.total || 0),
             totalPlayers: Number(players.rows[0]?.total || 0),
             totalBet: Number(bets.rows[0]?.total_bet || 0),
@@ -55,8 +55,11 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         });
 
     } catch (err) {
-        console.error("❌ REAL ERROR:", err); // 👈 THIS IS WHAT YOU NEED
-        res.status(500).json({ error: err.message });
+        console.error("❌ SUPERADMIN ERROR:", err); // 👈 THIS IS WHAT WE NEED
+        return res.status(500).json({
+            error: err.message,
+            stack: err.stack
+        });
     }
 });
 
