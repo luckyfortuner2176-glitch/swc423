@@ -9,7 +9,7 @@ function isSuperAdmin(req, res, next) {
     }
 
     // ⚠️ FIX: use string role consistently
-    if (req.session.user.role !== 'superadmin') {
+    if (req.session.user.role !== '-1') {
         return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -51,7 +51,16 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
             totalPlayers: Number(players.rows[0]?.total || 0),
             totalBet: Number(bets.rows[0]?.total_bet || 0),
             totalCashIn: Number(cash.rows[0]?.cash_in || 0),
-            totalWithdraw: Number(cash.rows[0]?.withdraw || 0)
+            totalWithdraw: Number(cash.rows[0]?.withdraw || 0),
+
+            // TEMP SAFE VALUES
+            onlineAgents: 0,
+            offlineAgents: 0,
+            pendingAgents: 0,
+            onlinePlayers: 0,
+            offlinePlayers: 0,
+            pendingPlayers: 0,
+            totalWon: 0
         });
 
     } catch (err) {
