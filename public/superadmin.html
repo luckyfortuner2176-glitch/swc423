@@ -89,7 +89,7 @@
                     <!-- Game Points Flow -->
                     <div class="card wallet-card">
                         <div class="card-content">
-                            <h3>Game Points Flow</h3>
+                            <h3>Game Income</h3>
                             <p class="amount">0.00</p>
                             <span class="badge blue">0</span>Players Bet<br>
                             <span class="badge yellow">0</span>Won Points<br>
@@ -268,10 +268,14 @@
                 playersCard.querySelectorAll('.badge')[2].textContent = data.pendingPlayers;
 
                 // =========================
-                // Game Flow
+                // Game Income (FIXED)
                 // =========================
                 const walletCard = document.querySelector('.wallet-card');
-                walletCard.querySelector('.amount').textContent = formatNumber(data.totalBet);
+
+                // 🔥 MAIN VALUE = NET INCOME
+                walletCard.querySelector('.amount').textContent = formatNumber(data.netGameFlow);
+
+                // Badges remain the same
                 walletCard.querySelectorAll('.badge')[0].textContent = formatNumber(data.totalBet);
                 walletCard.querySelectorAll('.badge')[1].textContent = formatNumber(data.totalWon);
 
