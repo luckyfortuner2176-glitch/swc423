@@ -999,7 +999,19 @@ body, html {
 
         if (!iframe) return;
 
-        iframe.style.display = enabled ? "block" : "none";
+        if (enabled) {
+            iframe.style.display = "block";
+
+            // 🔥 restore video if missing
+            if (!iframe.src && currentVideo) {
+                iframe.src = currentVideo;
+            }
+
+        } else {
+            // 🔥 STOP video completely
+            iframe.src = ""; // ✅ kills playback + audio
+            iframe.style.display = "none";
+        }
     }
     function animateValue(id, start, end) {
         document.getElementById(id).textContent = formatNumber(end);
