@@ -209,20 +209,18 @@
 
                 players.forEach(p => {
 
-                    const isDirect = Number(p.parent_id) === Number(currentUserId);
-
                     const row = document.createElement('tr');
-                    console.log("Player parent:", p.parent_id, "Current user:", currentUserId);
+
                     row.innerHTML = `
                         <td>${p.username}</td>
                         <td class="actions">
-                            <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
-                                onchange="handlePlayerAction(this, this.value, ${p.id}, '${p.status}', ${isDirect})">
+                            <select class="action-dropdown styled-select" 
+                                onchange="handlePlayerAction(this, this.value, ${p.id}, '${p.status}')">
 
                                 <option value="">⚙️ Select Action</option>
                                 <option value="promote">⬆️ Set at Agent</option>
-                                <option value="add" ${!isDirect ? 'disabled' : ''}>➕ Load</option>
-                                <option value="withdraw" ${!isDirect ? 'disabled' : ''}>💸 Withdraw</option>
+                                <option value="add">➕ Load</option>
+                                <option value="withdraw">💸 Withdraw</option>
                                 <option value="${p.status === 'suspended' ? 'activate' : 'suspend'}">
                                     ${p.status === 'suspended' ? '✅ Activate' : '⛔ Suspend'}
                                 </option>
@@ -233,9 +231,9 @@
                         <td>${formatNumber(p.points)}</td>
                         <td class="status ${p.status}">${p.status}</td>
                         <td>${new Date(p.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                         })}</td>
                     `;
 
@@ -351,7 +349,7 @@
                 showSnackbar("Server error");
             }
         }
-        function handlePlayerAction(selectEl, action, userId, status, isDirect) {
+        function handlePlayerAction(selectEl, action, userId, status) {
             if (!action) return;
 
             switch(action) {
@@ -360,10 +358,10 @@
                     break;
 
                 case 'add':
-                    if (isDirect) openModal(userId);
+                    openModal(userId);
                     break;
                 case 'withdraw':
-                    if (isDirect) openWithdrawModal(userId);
+                    openWithdrawModal(userId);
                     break;
                 case 'activate':
                 case 'suspend':
@@ -466,8 +464,9 @@
             }
         }
         // Call after session check
-        checkSession();
-        
+        checkSession().then(() => {
+            loadPlayers();
+        });
         
     </script>
 
