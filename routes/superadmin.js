@@ -96,11 +96,11 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         const cash = await pool.query(`
             SELECT
                 COALESCE(SUM(CASE 
-                    WHEN description ILIKE 'Transferred (CashIn)%' 
+                    WHEN description ILIKE 'Transferred%' 
                     THEN amount ELSE 0 END), 0) AS cash_in,
 
                 COALESCE(SUM(CASE 
-                    WHEN description ILIKE 'Received (Withdrawal)%' 
+                    WHEN description ILIKE 'Received%' 
                     THEN amount ELSE 0 END), 0) AS withdraw
             FROM wallet_transactions
         `);
