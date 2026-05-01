@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/connection');
 
-// ✅ Middleware
+// =========================
+// Middleware
+// =========================
 function isSuperAdmin(req, res, next) {
     if (!req.session.user) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -15,7 +17,9 @@ function isSuperAdmin(req, res, next) {
     next();
 }
 
-// ✅ Helper: map status counts safely
+// =========================
+// Helper: map status counts
+// =========================
 function mapStatus(rows) {
     const map = {
         online: 0,
@@ -32,7 +36,9 @@ function mapStatus(rows) {
     return map;
 }
 
-// ✅ Route
+// =========================
+// Route: Superadmin Dashboard
+// =========================
 router.get('/dashboard', isSuperAdmin, async (req, res) => {
     console.log("🔥 SUPERADMIN DASHBOARD HIT");
 
@@ -95,23 +101,31 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         `);
 
         // =========================
-        // MAP STATUS RESULTS
+        // MAP STATUS
         // =========================
         const agentMap = mapStatus(agentStatus.rows);
         const playerMap = mapStatus(playerStatus.rows);
 
         // =========================
-        // FINAL RESPONSE
+        // GAME FLOW VALUES
+        // =========================
+        const totalBet = Number(gameFlow.rows[0]?.total_bet || 0);
+        const totalWon = Number(gameFlow.rows[0]?.total_won || 0);
+        const netGameFlow = totalBet - totalWon;
+
+        // =========================
+        // RESPONSE
         // =========================
         return res.json({
             totalAgents: Number(agents.rows[0]?.total || 0),
             totalPlayers: Number(players.rows[0]?.total || 0),
 
-            // ✅ GAME FLOW (FIXED)
-            totalBet: Number(gameFlow.rows[0]?.total_bet || 0),
-            totalWon: Number(gameFlow.rows[0]?.total_won || 0),
+            // ✅ Game Flow
+            totalBet: totalBet,           // raw bet
+            totalWon: totalWon,           // wins
+            netGameFlow: netGameFlow,     // BET - WON
 
-            // ✅ CASH FLOW
+            // ✅ Cash Flow
             totalCashIn: Number(cash.rows[0]?.cash_in || 0),
             totalWithdraw: Number(cash.rows[0]?.withdraw || 0),
 
