@@ -40,6 +40,9 @@
             <h2>Wallet Logs</h2>
 
             <div class="table-wrapper">
+                <select id="userFilter" onchange="loadWalletLogs()">
+                    <option value="">All Users</option>
+                </select>
                 <table class="styled-table" id="walletTable">
                     <thead>
                         <tr>
@@ -141,10 +144,27 @@
                 }
 
                 const data = await res.json();
+
                 const tbody = document.querySelector('#walletTable tbody');
                 tbody.innerHTML = '';
 
-                data.forEach(tx => {
+                const selectedUser = document.getElementById('userFilter')?.value;
+
+                // ✅ SAFER FILTER (case-insensitive)
+                let filtered = data;
+
+                if (selectedUser) {
+                    filtered = data.filter(tx => 
+                        (tx.username || '').toLowerCase() === selectedUser.toLowerCase()
+                    );
+                }
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6">No records found</td></tr>`;
+                    return;
+                }
+
+                filtered.forEach(tx => {
                     const row = document.createElement('tr');
 
                     const typeIcon = tx.type === 'credit' ? '↑' : '↓';
@@ -239,7 +259,35 @@
                 showSnackbar("Logout failed", "error");
             }
         }
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/my-wallet-transactions', {
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                const select = document.getElementById('userFilter');
+
+                // ✅ CLEAR first (avoid duplicates)
+                select.innerHTML = `<option value="">All Users</option>`;
+
+                // ✅ GET UNIQUE USERNAMES
+                const uniqueUsers = [...new Set(data.map(tx => tx.username).filter(Boolean))];
+
+                uniqueUsers.forEach(username => {
+                    const opt = document.createElement('option');
+                    opt.value = username;
+                    opt.textContent = username;
+                    select.appendChild(opt);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
         checkSession().then(() => {
+            loadUsers();
             loadWalletLogs();
         });
         

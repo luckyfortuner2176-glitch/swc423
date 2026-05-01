@@ -1025,7 +1025,7 @@ app.get('/api/my-wallet-transactions', isAuthenticated, async (req, res) => {
     const params = [];
 
     // ✅ Restrict only if NOT super admin
-    if (userRole !== -1) {
+    if (userRole !== '-1') {
       query += ` WHERE wt.user_id = $1`;
       params.push(userId);
     }
