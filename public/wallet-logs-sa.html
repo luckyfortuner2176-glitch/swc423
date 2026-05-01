@@ -43,6 +43,7 @@
                 <table class="styled-table" id="walletTable">
                     <thead>
                         <tr>
+                            <th>Username</th>
                             <th>Date</th>
                             <th>Type</th>
                             <th>Amount</th>
@@ -151,8 +152,10 @@
 
                     row.innerHTML = `
                         <td>${new Date(tx.created_at).toLocaleString()}</td>
+                        <td>${tx.username}</td>
                         <td style="color: ${typeColor}; font-weight: bold;">
                             ${typeIcon} ${tx.type}
+                        </td>
                         <td>${formatMoney(tx.amount)}</td>
                         <td>${formatMoney(tx.balance_after)}</td>
                         <td>${tx.description}</td>

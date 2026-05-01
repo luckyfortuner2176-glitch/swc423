@@ -1006,13 +1006,24 @@ app.post('/api/withdraw-points', isAuthenticated, async (req, res) => {
 app.get('/api/my-wallet-transactions', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user.id;
+    const userRole = req.session.user.role;
 
-    const result = await pool.query(`
+    let query = `
       SELECT id, type, amount, balance_after, description, reference_id, created_at
       FROM wallet_transactions
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-    `, [userId]);
+    `;
+
+    const params = [];
+
+    // ✅ If NOT super admin → restrict to own transactions
+    if (userRole !== -1) {
+      query += ` WHERE user_id = $1`;
+      params.push(userId);
+    }
+
+    query += ` ORDER BY created_at DESC`;
+
+    const result = await pool.query(query, params);
 
     res.json(result.rows);
 
