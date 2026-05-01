@@ -645,7 +645,7 @@ app.get('/api/players', isAuthenticated, async (req, res) => {
     const params = [];
 
     // 🔥 ONLY restrict if NOT super role
-    if (userRole !== -1) {
+    if (userRole !== '-1') {
       query += ` AND u.parent_id = $1`;
       params.push(userId);
     }
