@@ -371,8 +371,6 @@
             try {
                 const session = await fetch('/api/dashboard', { credentials: 'include' });
                 const user = await session.json();
-                const currentUserId = user.id;
-                const currentUserRole = user.role;
 
                 const res = await fetch('/api/agents', { credentials: 'include' });
                 let agents = await res.json();
@@ -387,50 +385,21 @@
                 if (statusFilter) {
                     agents = agents.filter(a => a.status === statusFilter);
                 }
-                
-                // SORTING
-                if (currentSort) {
-                    agents.sort((a, b) => {
-                        let valA, valB;
 
-                        switch(currentSort) {
-                            case 'username':
-                                valA = a.username.toLowerCase();
-                                valB = b.username.toLowerCase();
-                                break;
-                            case 'points':
-                                valA = Number(a.points);
-                                valB = Number(b.points);
-                                break;
-                            case 'earnings':
-                                valA = Number(a.commission_earnings || 0);
-                                valB = Number(b.commission_earnings || 0);
-                                break;
-                            case 'commission':
-                                valA = Number(a.commission_rate || 0);
-                                valB = Number(b.commission_rate || 0);
-                                break;
-                        }
-
-                        if (valA < valB) return -1 * sortDirection;
-                        if (valA > valB) return 1 * sortDirection;
-                        return 0;
-                    });
-                }
                 const table = document.getElementById('agentsTable');
                 table.innerHTML = '';
 
                 agents.forEach(a => {
 
-                    const isDirect = Number(a.parent_id) === Number(currentUserId);
-
                     const row = document.createElement('tr');
 
                     row.innerHTML = `
                         <td><p class="btn add">${a.username}</p></td>
+
                         <td>
-                            <select class="action-dropdown ${!isDirect ? 'disabled' : ''}" 
+                            <select class="action-dropdown"
                                 onchange="handleAgentAction(this, this.value, ${a.id}, ${a.points || 0}, ${a.commission_earnings || 0})">
+
                                 <option value="">⚙️ Select Action</option>
                                 <option value="load">➕ Load</option>
                                 <option value="withdraw_load">💸 Withdraw Load</option>
@@ -438,19 +407,17 @@
                                 <option value="network">🌐 View Network</option>
                             </select>
                         </td>
+
                         <td class="wallet-yellow">${formatPHP(a.points)}</td>
+
                         <td class="earnings-green">${formatPHP(a.commission_earnings || 0)}</td>
+
                         <td>
                             CURRENT: ${a.commission_rate || 0}%<br>
                             <input type="number" min="0" max="100"
                                 value="${a.commission_rate || 0}"
-                                ${!isDirect ? 'disabled' : ''}
                                 onchange="updateCommission(${a.id}, this.value)">
                         </td>
-
-                        
-
-                        
                     `;
 
                     table.appendChild(row);
@@ -458,14 +425,6 @@
 
             } catch (err) {
                 console.error(err);
-            }
-        }
-        function formatRole(role) {
-            switch(role) {
-                case 'master_agent': return '🗃️ Incorporator';
-                case 'sub_agent': return '📑 Master Agent';
-                case 'agent': return '🏷️ Gold Agent';
-                default: return role;
             }
         }
         // =========================
