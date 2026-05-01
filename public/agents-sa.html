@@ -704,7 +704,9 @@
             }
         }
         // Call after session check
-        checkSession();
+        checkSession().then(() => {
+            loadAgents();
+        });
     </script>
 
 </body>
