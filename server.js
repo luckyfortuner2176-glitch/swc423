@@ -631,17 +631,28 @@ app.post('/api/reject-user', isAuthenticated, async (req, res) => {
 app.get('/api/players', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user.id;
+    const userRole = req.session.user.role;
 
-    const result = await pool.query(`
+    let query = `
       SELECT u.id, u.username, u.points, u.status, u.role, u.parent_id, u.created_at,
              p.username AS parent_username
       FROM users u
       LEFT JOIN users p ON u.parent_id = p.id
       WHERE u.role = 'player'
       AND u.status NOT IN ('pending', 'rejected')
-      AND u.parent_id = $1
-      ORDER BY u.created_at DESC
-    `, [userId]);
+    `;
+
+    const params = [];
+
+    // 🔥 ONLY restrict if NOT super role
+    if (userRole !== -1) {
+      query += ` AND u.parent_id = $1`;
+      params.push(userId);
+    }
+
+    query += ` ORDER BY u.created_at DESC`;
+
+    const result = await pool.query(query, params);
 
     res.json(result.rows);
 
