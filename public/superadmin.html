@@ -280,13 +280,16 @@
                 walletCard.querySelectorAll('.badge')[1].textContent = formatNumber(data.totalWon);
 
                 // =========================
-                // Cash Flow
+                // Agent-Player Points Flow (FIXED)
                 // =========================
                 const commissionCard = document.querySelector('.commission-card');
-                commissionCard.querySelector('.amount').textContent = formatNumber(data.totalCashIn);
+
+                // 🔥 MAIN VALUE = NET FLOW
+                commissionCard.querySelector('.amount').textContent = formatNumber(data.netCashFlow);
+
+                // Badges stay raw
                 commissionCard.querySelectorAll('.badge')[0].textContent = formatNumber(data.totalCashIn);
                 commissionCard.querySelectorAll('.badge')[1].textContent = formatNumber(data.totalWithdraw);
-
             } catch (err) {
                 console.error(err);
                 showSnackbar("Failed to load dashboard", "error");

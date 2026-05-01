@@ -91,12 +91,17 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         `);
 
         // =========================
-        // CASH FLOW
+        // CASH FLOW (FIXED - BASED ON DESCRIPTION)
         // =========================
         const cash = await pool.query(`
             SELECT
-                COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) AS cash_in,
-                COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) AS withdraw
+                COALESCE(SUM(CASE 
+                    WHEN description ILIKE 'Transferred (CashIn)%' 
+                    THEN amount ELSE 0 END), 0) AS cash_in,
+
+                COALESCE(SUM(CASE 
+                    WHEN description ILIKE 'Received (Withdrawal)%' 
+                    THEN amount ELSE 0 END), 0) AS withdraw
             FROM wallet_transactions
         `);
 
@@ -112,7 +117,10 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
         const totalBet = Number(gameFlow.rows[0]?.total_bet || 0);
         const totalWon = Number(gameFlow.rows[0]?.total_won || 0);
         const netGameFlow = totalBet - totalWon;
-
+        
+        const totalCashIn = Number(cash.rows[0]?.cash_in || 0);
+        const totalWithdraw = Number(cash.rows[0]?.withdraw || 0);
+        const netCashFlow = totalCashIn - totalWithdraw;
         // =========================
         // RESPONSE
         // =========================
@@ -125,9 +133,10 @@ router.get('/dashboard', isSuperAdmin, async (req, res) => {
             totalWon: totalWon,           // wins
             netGameFlow: netGameFlow,     // BET - WON
 
-            // ✅ Cash Flow
-            totalCashIn: Number(cash.rows[0]?.cash_in || 0),
-            totalWithdraw: Number(cash.rows[0]?.withdraw || 0),
+            // ✅ Cash Flow (FIXED)
+            totalCashIn: totalCashIn,
+            totalWithdraw: totalWithdraw,
+            netCashFlow: netCashFlow,
 
             // ✅ Agent status
             onlineAgents: agentMap.online,
