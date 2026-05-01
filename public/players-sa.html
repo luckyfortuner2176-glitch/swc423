@@ -129,8 +129,7 @@
                 document.querySelectorAll('.username')
                     .forEach(el => el.textContent = data.username);
 
-                loadPendingCount();
-                loadWithdrawCount();
+                
             } catch (err) {
                 console.error(err);
                 window.location.href = '/';
@@ -155,30 +154,7 @@
             }
         }
 
-        // =========================
-        // Load pending approvals count
-        // =========================
-        async function loadPendingCount() {
-            try {
-                const res = await fetch('/api/pending-count', {
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-
-                const badge = document.getElementById('pendingBadge');
-
-                if (data.count > 0) {
-                    badge.style.display = 'inline-block';
-                    badge.textContent = data.count;
-                } else {
-                    badge.style.display = 'none';
-                }
-
-            } catch (err) {
-                console.error(err);
-            }
-        }
+        
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -347,30 +323,7 @@
             closeModal();
             loadPlayers();
         }
-        // =========================
-        // Load withdrawal request count
-        // =========================
-        async function loadWithdrawCount() {
-            try {
-                const res = await fetch('/api/withdrawal-count', {
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-
-                const badge = document.getElementById('withdrawBadge');
-
-                if (data.count > 0) {
-                    badge.style.display = 'inline-block';
-                    badge.textContent = data.count;
-                } else {
-                    badge.style.display = 'none';
-                }
-
-            } catch (err) {
-                console.error(err);
-            }
-        }
+        
         // =========================
         // Promote user to agent
         // =========================
@@ -514,8 +467,8 @@
         }
         // Call after session check
         checkSession();
-        setInterval(loadWithdrawCount, 10000);
-        setInterval(loadPendingCount, 10000);
+        
+        
     </script>
 
 </body>
