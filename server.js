@@ -1009,19 +1009,28 @@ app.get('/api/my-wallet-transactions', isAuthenticated, async (req, res) => {
     const userRole = req.session.user.role;
 
     let query = `
-      SELECT id, type, amount, balance_after, description, reference_id, created_at
-      FROM wallet_transactions
+      SELECT 
+        wt.id,
+        wt.type,
+        wt.amount,
+        wt.balance_after,
+        wt.description,
+        wt.reference_id,
+        wt.created_at,
+        u.username
+      FROM wallet_transactions wt
+      LEFT JOIN users u ON wt.user_id = u.id
     `;
 
     const params = [];
 
-    // ✅ If NOT super admin → restrict to own transactions
+    // ✅ Restrict only if NOT super admin
     if (userRole !== -1) {
-      query += ` WHERE user_id = $1`;
+      query += ` WHERE wt.user_id = $1`;
       params.push(userId);
     }
 
-    query += ` ORDER BY created_at DESC`;
+    query += ` ORDER BY wt.created_at DESC`;
 
     const result = await pool.query(query, params);
 

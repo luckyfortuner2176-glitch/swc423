@@ -151,8 +151,8 @@
                     const typeColor = tx.type === 'credit' ? 'red' : 'green';
 
                     row.innerHTML = `
+                        <td>${tx.username || '-'}</td>
                         <td>${new Date(tx.created_at).toLocaleString()}</td>
-                        <td>${tx.username}</td>
                         <td style="color: ${typeColor}; font-weight: bold;">
                             ${typeIcon} ${tx.type}
                         </td>
