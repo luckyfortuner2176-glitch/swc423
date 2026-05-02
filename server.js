@@ -1400,7 +1400,7 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
       UPDATE games SET status='CLOSED'
       WHERE status='OPEN'
     `);
-
+    await cleanupDummyBets();  
     const result = await pool.query(`
       INSERT INTO games (fight_number, status, event_name)
       VALUES ($1, 'OPEN', $2)
@@ -1433,6 +1433,24 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// ==========================
+//  CLEANUP DUMMY BETS (AFTER GAME RESOLUTION - SAFETY MEASURE)
+// ==========================
+const cleanupDummyBets = async () => {
+  try {
+    await pool.query(`
+      DELETE FROM bets
+      WHERE is_dummy = true
+      AND game_id IN (
+        SELECT id FROM games WHERE status = 'RESOLVED'
+      )
+    `);
+
+    console.log("✅ Dummy bets cleaned up");
+  } catch (err) {
+    console.error("❌ Failed to clean dummy bets:", err);
+  }
+};
 // ==========================
 //  CLOSE GAME (DECLARATOR ONLY)
 // ==========================
