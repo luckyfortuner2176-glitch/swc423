@@ -1811,6 +1811,7 @@ app.post('/api/promote-user', isAuthenticated, async (req, res) => {
 app.get('/api/my-commission-transactions', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user.id;
+    const role = req.session.user.role;
 
     const {
       search = '',
@@ -1832,13 +1833,21 @@ app.get('/api/my-commission-transactions', isAuthenticated, async (req, res) => 
       FROM commission_transactions ct
       LEFT JOIN users u ON u.id = ct.source_user_id
       LEFT JOIN games g ON g.id = ct.game_id
-      WHERE ct.user_id = $1
     `;
 
-    const params = [userId];
-    let i = 2;
+    const params = [];
+    let i = 1;
 
-    // 🔍 SEARCH (username or game fight number)
+    // ✅ ONLY filter by user if NOT super admin
+    if (role !== -1) {
+      query += ` WHERE ct.user_id = $${i}`;
+      params.push(userId);
+      i++;
+    } else {
+      query += ` WHERE 1=1`; // dummy condition for easier appending
+    }
+
+    // 🔍 SEARCH
     if (search) {
       query += ` AND (
         u.username ILIKE $${i} 
