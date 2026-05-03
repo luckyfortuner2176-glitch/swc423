@@ -698,7 +698,13 @@ button:disabled {
         // 📺 STREAM TOGGLE
         const streamContainer = document.getElementById('streamContainer');
         if (streamContainer) {
-            streamContainer.style.display = data.stream_enabled ? 'block' : 'none';
+            // ✅ Declarator ALWAYS sees video
+            if (userRole === 'declarator') {
+                streamContainer.style.display = 'block';
+            } else {
+                // 👇 Only players are affected
+                streamContainer.style.display = data.stream_enabled ? 'block' : 'none';
+            }
         }
 
         // 🎥 VIDEO

@@ -983,16 +983,16 @@ body, html {
 
         let url = data.video_url;
 
-        // ✅ FORCE AUTOPLAY + MUTE (required by browsers)
         if (!url.includes("autoplay=1")) {
             url += (url.includes("?") ? "&" : "?") + "autoplay=1&mute=1";
         }
 
-        // ✅ Prevent reload spam
+        // ✅ SAVE IT HERE
+        currentVideo = url;
+
         if (iframe.src !== url) {
             iframe.src = url;
         }
-
     }
     function handleStreamToggle(enabled) {
         const iframe = document.getElementById("videoFrame");
@@ -1002,14 +1002,13 @@ body, html {
         if (enabled) {
             iframe.style.display = "block";
 
-            // 🔥 restore video if missing
-            if (!iframe.src && currentVideo) {
+            // ✅ ALWAYS restore
+            if (currentVideo) {
                 iframe.src = currentVideo;
             }
 
         } else {
-            // 🔥 STOP video completely
-            iframe.src = ""; // ✅ kills playback + audio
+            iframe.src = ""; // stop video
             iframe.style.display = "none";
         }
     }
