@@ -1400,7 +1400,7 @@ app.post('/api/start-game', isAuthenticated, async (req, res) => {
       UPDATE games SET status='CLOSED'
       WHERE status='OPEN'
     `);
-    await cleanupDummyBets();  
+      
     const result = await pool.query(`
       INSERT INTO games (fight_number, status, event_name)
       VALUES ($1, 'OPEN', $2)
